@@ -30,7 +30,7 @@ ESTILO DEL CV (Harvard)
 - Escribe el CV en el idioma indicado (es o en). Si la persona habla español y pide CV en inglés, traduce con naturalidad sin cambiar hechos.
 
 CADA RESPUESTA
-Llama SIEMPRE a la herramienta "actualizar" con: tu siguiente mensaje para la persona, el CV completo actualizado (no solo lo nuevo), la sección en la que van, hasta 3 respuestas rápidas útiles y si el CV ya está completo. Cuando ya tengas lo esencial de todas las secciones, dilo, marca completo=true y ofrece revisar o descargar.`;
+Responde ÚNICAMENTE llamando a la herramienta "actualizar" (no escribas texto fuera de ella). Llama SIEMPRE a la herramienta "actualizar" con: tu siguiente mensaje para la persona, el CV completo actualizado (no solo lo nuevo), la sección en la que van, hasta 3 respuestas rápidas útiles y si el CV ya está completo. Cuando ya tengas lo esencial de todas las secciones, dilo, marca completo=true y ofrece revisar o descargar.`;
 
 const CV_SCHEMA = {
   type: 'object',
@@ -105,7 +105,13 @@ function bad(res, code, error) {
 
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
-  if (req.method !== 'POST') return bad(res, 405, 'Usa POST.');
+  // Prueba interna del equipo: GET /api/cv-coach?prueba=<TC_TEST_TOKEN> corre una conversación fija.
+  const tok = process.env.TC_TEST_TOKEN;
+  if (req.method === 'GET' && tok && req.query && req.query.prueba === tok) {
+    req.body = { idioma: 'es', cv: {}, perfil: { nombre: 'Persona Prueba' }, messages: [
+      { role: 'user', content: 'Estudié Psicología en la Universidad Iberoamericana Torreón (2018-2022). Trabajé de 2019 a 2021 en Express Río Grande, en Durango, a cargo de recursos humanos: incidencias de nómina, préstamos, asistencias y contrataciones.' }
+    ] };
+  } else if (req.method !== 'POST') return bad(res, 405, 'Usa POST.');
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return bad(res, 503, 'El coach todavía no está conectado. Intenta más tarde.');
 
@@ -156,7 +162,7 @@ module.exports = async function handler(req, res) {
         max_tokens: 4000,
         system: SYSTEM + '\n\nCONTEXTO DE ESTA PERSONA\n' + contexto,
         tools: [TOOL],
-        tool_choice: { type: 'tool', name: 'actualizar' },
+        tool_choice: { type: 'auto' },
         messages: merged
       })
     });
@@ -166,9 +172,13 @@ module.exports = async function handler(req, res) {
       return bad(res, 502, r.status === 429 ? 'El coach está muy ocupado. Intenta en un minuto.' : 'El coach no pudo responder. Intenta de nuevo.');
     }
     const data = await r.json();
-    const call = (data.content || []).find(c => c.type === 'tool_use' && c.name === 'actualizar');
-    if (!call) return bad(res, 502, 'El coach no pudo responder. Intenta de nuevo.');
-    const out = call.input || {};
+    const blocks = data.content || [];
+    const call = blocks.find(c => c.type === 'tool_use' && c.name === 'actualizar');
+    const texto = blocks.filter(c => c.type === 'text').map(c => c.text).join('\n').trim();
+    if (!call && !texto) return bad(res, 502, 'El coach no pudo responder. Intenta de nuevo.');
+    // Respaldo: si el modelo respondió solo con texto, se muestra el mensaje y el CV se queda igual.
+    const out = call ? (call.input || {}) : { mensaje: texto, cv: cv, seccion: body.seccion || 'datos', completo: false };
+    if (call && !out.mensaje && texto) out.mensaje = texto;
     res.status(200).json({
       mensaje: String(out.mensaje || ''),
       cv: out.cv && typeof out.cv === 'object' ? out.cv : cv,

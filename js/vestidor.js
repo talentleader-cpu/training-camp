@@ -66,7 +66,7 @@
     busy = true; S.error = ''; renderLog();
     var payload = {
       messages: S.messages.filter(function (m, i) { return !(i === 0 && m.role === 'assistant'); }).map(function (m) { return { role: m.role, content: m.content }; }),
-      cv: S.cv, vacante: S.vacante, idioma: S.lang,
+      cv: S.cv, vacante: S.vacante, idioma: S.lang, seccion: S.seccion,
       perfil: { nombre: jugador.nombre, liga: jugador.liga, carrera: jugador.carrera, ciudad: jugador.ciudad, ingles: jugador.ingles }
     };
     // el primer mensaje del coach es local: se manda como contexto del primer turno del usuario
