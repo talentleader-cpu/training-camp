@@ -108,30 +108,68 @@
     return null;
   }
   if (TTS) TTS.onvoiceschanged = function () { if (G) voice = pickVoice(G.idioma); };
+  if (TTS) TTS.getVoices(); // empieza a cargar las voces del navegador desde ya
+
+  // Voz neural del servidor (/api/voz) con respaldo en la voz del navegador.
+  var nube = true; // se apaga si el servidor no tiene voz configurada
+  var audioEl = new Audio(); audioEl.preload = 'auto';
+  var SILENCIO = (function () { // WAV de 50 ms en silencio, para desbloquear el audio en iPhone
+    var n = 400, b = new Uint8Array(44 + n), v = new DataView(b.buffer);
+    function w(o, t) { for (var i = 0; i < t.length; i++) b[o + i] = t.charCodeAt(i); }
+    w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+    for (var i = 44; i < b.length; i++) b[i] = 128;
+    var str = ''; for (var k = 0; k < b.length; k++) str += String.fromCharCode(b[k]);
+    return 'data:audio/wav;base64,' + btoa(str);
+  })();
+  function desbloquearAudio() { try { audioEl.src = SILENCIO; var p = audioEl.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
 
   var speaking = null; // { resolve }
   function speak(text) {
     return new Promise(function (resolve) {
-      var done = false;
-      function fin() { if (done) return; done = true; speaking = null; clearTimeout(guard); $('mascot').classList.remove('talk'); resolve(); }
+      var done = false, guard = null;
+      function fin() { if (done) return; done = true; speaking = null; clearTimeout(guard); $('mascot').classList.remove('talk'); audioEl.onended = audioEl.onerror = null; resolve(); }
       speaking = { resolve: fin };
       $('mascot').classList.add('talk');
-      var guard = setTimeout(fin, 4000 + words(text) * 600); // por si el navegador no avisa que terminó
-      if (!TTS) { setTimeout(fin, 900); return; }
-      TTS.cancel();
-      var parts = String(text).match(/[^.!?¿¡]+[.!?]*|[¿¡][^?!]+[?!]*/g) || [text];
-      parts = parts.map(str).filter(Boolean);
-      parts.forEach(function (p, i) {
-        var u = new SpeechSynthesisUtterance(p);
-        u.lang = G.idioma === 'en' ? 'en-US' : 'es-MX';
-        if (voice) u.voice = voice;
-        u.rate = G.idioma === 'en' ? 0.97 : 1.03;
-        if (i === parts.length - 1) { u.onend = fin; u.onerror = fin; }
-        TTS.speak(u);
-      });
+      function navegador() {
+        clearTimeout(guard); guard = setTimeout(fin, 4000 + words(text) * 600); // por si el navegador no avisa que terminó
+        if (!TTS) { setTimeout(fin, 900); return; }
+        if (!voice) voice = pickVoice(G.idioma);
+        TTS.cancel();
+        var parts = String(text).match(/[^.!?¿¡]+[.!?]*|[¿¡][^?!]+[?!]*/g) || [text];
+        parts = parts.map(str).filter(Boolean);
+        parts.forEach(function (p, i) {
+          var u = new SpeechSynthesisUtterance(p);
+          u.lang = G.idioma === 'en' ? 'en-US' : 'es-MX';
+          if (voice) u.voice = voice;
+          u.rate = G.idioma === 'en' ? 0.97 : 1.03;
+          if (i === parts.length - 1) { u.onend = fin; u.onerror = fin; }
+          TTS.speak(u);
+        });
+      }
+      if (!nube) { navegador(); return; }
+      guard = setTimeout(function () { if (!done && audioEl.paused) navegador(); }, 9000); // si la voz neural tarda demasiado
+      fetch('/api/voz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texto: text, idioma: G.idioma }) })
+        .then(function (r) {
+          if (r.status === 501) { nube = false; throw new Error('sin_voz'); }
+          if (!r.ok) throw new Error('voz');
+          return r.blob();
+        })
+        .then(function (blob) {
+          if (done) return;
+          clearTimeout(guard);
+          var url = URL.createObjectURL(blob);
+          audioEl.onended = function () { URL.revokeObjectURL(url); fin(); };
+          audioEl.onerror = function () { URL.revokeObjectURL(url); if (!done) navegador(); };
+          audioEl.src = url;
+          var p = audioEl.play();
+          if (p && p.catch) p.catch(function () { if (!done) navegador(); });
+          guard = setTimeout(fin, 8000 + words(text) * 700);
+        })
+        .catch(function () { if (!done) navegador(); });
     });
   }
-  function skipSpeech() { if (TTS) TTS.cancel(); if (speaking) speaking.resolve(); }
+  function skipSpeech() { if (TTS) TTS.cancel(); try { audioEl.pause(); } catch (e) {} if (speaking) speaking.resolve(); }
 
   /* =================== EN VIVO =================== */
   var G = null, rec = null, clockT = null, silenceT = null;
@@ -177,6 +215,7 @@
   $('start').onclick = function () {
     if (!SR) return;
     if (TTS) { try { var u = new SpeechSynthesisUtterance(' '); u.volume = 0; TTS.speak(u); } catch (e) {} } // desbloquea la voz en iPhone
+    desbloquearAudio(); // permite reproducir la voz neural en iPhone
     var go = function () { startGame(); };
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       $('start').disabled = true; $('startNote').textContent = 'Permite el micrófono para entrar a la cancha…';
@@ -191,6 +230,7 @@
     G = { coach: P.coach, idioma: idioma, dur: P.dur, cv: getCV(), vacante: str(P.vacante), plan: null, historial: [], analyses: [],
       t0: 0, forceNext: false, ended: false, preguntas: 0, state: 'idle', fails: 0, m: { words: 0, speakSec: 0, fillers: 0, respuestas: 0 }, saved: false };
     voice = pickVoice(idioma);
+    fetch('/api/voz').then(function (r) { return r.json(); }).then(function (d) { nube = d && d.voz && d.voz !== 'navegador'; }).catch(function () {});
     $('coachImg').src = '/assets/' + COACH[G.coach].img + '.png';
     $('boardTitle').textContent = (G.vacante.split('\n')[0] || 'Coach ' + COACH[G.coach].n).replace(/[—–-].*$/, '').trim().slice(0, 40) || 'Entrevista';
     $('clock').textContent = fmt(G.dur * 60);

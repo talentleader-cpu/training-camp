@@ -45,6 +45,9 @@ Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de
 | `ANTHROPIC_API_KEY` | **Obligatoria.** Llave de la API de Claude para el coach. Sin ella el chat responde "El coach todavía no está conectado". |
 | `ANTHROPIC_WORKSPACE_ID` | Solo si la llave no pertenece a un workspace de Anthropic: ID del workspace (empieza con `wrkspc_`). |
 | `TC_MODEL` | Opcional. Modelo a usar (por defecto `claude-sonnet-5-5`). |
+| `ELEVENLABS_API_KEY` | Opcional, recomendada. Voz neural nativa para La Cancha (inglés y español). Sin ella se usa la voz del navegador. |
+| `TC_VOZ_EN` / `TC_VOZ_ES` | Opcional. ID de la voz de ElevenLabs para inglés y para español (Voice Library → copiar Voice ID). |
+| `OPENAI_API_KEY` | Alternativa a ElevenLabs para la voz (`gpt-4o-mini-tts`). Solo se usa si no hay llave de ElevenLabs. |
 
 ### Ver los registros
 
