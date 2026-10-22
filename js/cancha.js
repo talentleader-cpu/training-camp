@@ -92,6 +92,17 @@
     document.querySelectorAll('[data-l]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.l === lang)); b.disabled = P.coach === 'ingles' && b.dataset.l === 'es'; });
     document.querySelectorAll('[data-d]').forEach(function (b) { b.setAttribute('aria-pressed', String(Number(b.dataset.d) === P.dur)); });
   }
+  // viene del Vestidor: su CV y su vacante ya quedan cargados, lista para arrancar
+  if (/[?&]desde=vestidor/.test(location.search) && vestOk()) {
+    P.src = 'vestidor';
+    var vacV = str((TC.store.get('tc_vestidor_v1') || {}).vacante);
+    if (vacV) { P.vacante = vacV.slice(0, 8000); $('vacante').value = P.vacante; }
+    saveP();
+    setTimeout(function () {
+      toast(vacV ? 'Tu CV y tu vacante del Vestidor ya están cargados. Elige coach y arranca.' : 'Tu CV del Vestidor ya está cargado. Pega la vacante, elige coach y arranca.');
+      var t = document.getElementById(vacV ? 'h3' : 'h2'); if (t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 300);
+  }
   renderCvSrc(); renderRules();
 
   /* =================== VOZ =================== */

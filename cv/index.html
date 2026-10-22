@@ -90,6 +90,18 @@ main{flex:1;width:100%;max-width:1360px;margin:0 auto;display:flex;flex-wrap:wra
 .sheet.loading{opacity:.45;pointer-events:none}
 .dlnote{grid-column:1/-1;margin:0}
 @media (min-width: 1180px){ .steps .lbl{display:block;font-size:9px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%} }
+.upbar{position:relative;margin:10px 18px 0;display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:16px;background:var(--deep);color:var(--white);font:600 13px/1.35 var(--body);cursor:pointer}
+.upbar b{color:var(--gold)}
+.upbar input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.upbar[aria-busy="true"]{opacity:.7;pointer-events:none}
+details.lk{background:var(--white);border-radius:16px;padding:10px 14px;display:block}
+details.lk summary{cursor:pointer;font:700 13px var(--body);list-style:none;display:flex;justify-content:space-between;gap:8px}
+details.lk summary::-webkit-details-marker{display:none}
+details.lk summary small{font-weight:600;color:var(--ink-soft)}
+details.lk label{display:block;margin-top:10px;font:700 11px var(--body);letter-spacing:.06em;color:var(--blue);text-transform:uppercase}
+details.lk input{width:100%;margin-top:4px;height:42px;border-radius:12px;border:2px solid var(--line);padding:0 12px;font:500 14px var(--body)}
+details.lk .hint{margin:8px 0 0;font:500 12px var(--body);color:var(--ink-soft)}
+.sheet .ct a{color:inherit;text-decoration:underline}
 details.vac{margin:10px 18px 0;border:2px dashed var(--sky);border-radius:16px;padding:10px 14px}
 details.vac summary{cursor:pointer;font:700 13px var(--body);list-style:none;display:flex;justify-content:space-between;gap:8px}
 details.vac summary::-webkit-details-marker{display:none}
@@ -217,6 +229,7 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
         <div class="chk" id="stList"></div>
       </div>
     </div>
+    <label class="upbar" id="upBar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16 V4"></path><path d="M7 9 L12 4 L17 9"></path><path d="M5 20 H19"></path></svg><span id="upTxt"><b>¿Ya tienes CV?</b> Súbelo en PDF y lo mejoramos juntos</span><input type="file" id="cvFile" accept="application/pdf"></label>
     <details class="vac" id="vacBox">
       <summary><span>Vacante objetivo <small>(opcional)</small></span><small id="vacState">Agregar</small></summary>
       <label for="vacante" class="hint">Pega la descripción del puesto y tu coach priorizará sus palabras clave.</label>
@@ -241,6 +254,14 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
         <button type="button" data-ver="en" aria-pressed="false">English</button>
         <small id="verState"></small>
       </div>
+      <details class="lk" id="lkBox">
+        <summary><span>Enlace de LinkedIn <small>(opcional)</small></span><small id="lkState">Agregar</small></summary>
+        <label for="lkUrl">URL de tu perfil</label>
+        <input id="lkUrl" type="url" inputmode="url" placeholder="linkedin.com/in/tu-nombre" autocomplete="url">
+        <label for="lkTxt">Texto que se verá en tu CV</label>
+        <input id="lkTxt" type="text" maxlength="40" placeholder="LinkedIn Maricela">
+        <p class="hint">En tu PDF y Word el texto queda como enlace: al hacer clic abre tu perfil.</p>
+      </details>
       <article class="sheet" id="sheet" aria-label="Vista previa del CV"></article>
     </section>
 
@@ -261,9 +282,9 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
         <p class="fine dlnote" id="dlNote" hidden></p>
       </div>
       <div class="meta"><span>Gratis · sin marcas de agua</span><button type="button" class="linkbtn" id="reset">Empezar un CV nuevo</button></div>
-      <a class="next" id="nextCancha" href="/cancha/">
+      <a class="next" id="nextCancha" href="/cancha/?desde=vestidor">
         <img src="/assets/wx-futbol.png" alt="">
-        <span style="flex:1"><b>Ahora entrena la entrevista</b><small>La Cancha: entrevista por voz con este CV</small></span>
+        <span style="flex:1"><b>Simula tu entrevista →</b><small>Entra a La Cancha con este CV y tu vacante ya cargados</small></span>
       </a>
       <a class="wa" id="waLink" href="https://chat.whatsapp.com/EYc03Tpy4Jq5jjlr5EIv8L" target="_blank" rel="noopener">
         <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"></path><path d="M9 9.2c0 3 2.3 5.6 5.4 5.9l1.1-1.3-1.8-.9-.8.8c-1-.5-1.9-1.4-2.4-2.4l.8-.8-.9-1.8L9 9.2z" fill="currentColor" stroke="none"></path></svg></span>

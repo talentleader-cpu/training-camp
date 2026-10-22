@@ -10,7 +10,8 @@ const CV_SCHEMA = {
       type: 'object',
       properties: {
         nombre: { type: 'string' }, ciudad: { type: 'string' }, correo: { type: 'string' },
-        telefono: { type: 'string' }, linkedin: { type: 'string' }
+        telefono: { type: 'string' }, linkedin: { type: 'string', description: 'URL del perfil de LinkedIn' },
+        linkedin_texto: { type: 'string', description: 'Texto visible del enlace, ej. "LinkedIn Maricela". Lo define la persona.' }
       }
     },
     educacion: {

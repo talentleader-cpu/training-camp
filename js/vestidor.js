@@ -29,7 +29,7 @@
   function intro(l) {
     var extra = l === 'ambos' ? 'Platicamos en español y al final te entrego también la versión en inglés, con los mismos datos.'
       : l === 'en' ? 'Podemos platicar en español; yo escribo tu CV en inglés.' : '';
-    return 'Listo: tu CV va en ' + LANG_TXT[l] + '. ' + extra + '\n\nLo armamos en 7 etapas, una a la vez, para que quede preciso:\n1 Objetivo · 2 Datos · 3 Estudios · 4 Experiencia · 5 Proyectos · 6 Habilidades · 7 Revisión\n\nEtapa 1 de 7 · Objetivo: ¿a qué puesto o área quieres aplicar? Si ya tienes una vacante, pégala en «Vacante objetivo» y uso sus palabras clave.';
+    return 'Listo: tu CV va en ' + LANG_TXT[l] + '. ' + extra + '\n\n¿Ya tienes un CV? Súbelo en PDF y lo mejoramos juntos con preguntas. Si no, lo armamos desde cero en 7 etapas, una a la vez, para que quede preciso:\n1 Objetivo · 2 Datos · 3 Estudios · 4 Experiencia · 5 Proyectos · 6 Habilidades · 7 Revisión\n\nEtapa 1 de 7 · Objetivo: ¿a qué puesto o área quieres aplicar? Si ya tienes una vacante, pégala en «Vacante objetivo» y uso sus palabras clave.';
   }
   function fresh(lang) {
     return { v: 2, fase: 'idioma', lang: lang || 'es', ver: 'es', vacante: '', messages: [{ role: 'assistant', content: greet() }],
@@ -38,6 +38,9 @@
 
   var S = TC.store.get(KEY);
   if (!S || !S.cv) S = fresh();
+  if (!Array.isArray(S.messages) || !S.messages.length) S.messages = [{ role: 'assistant', content: greet() }];
+  if (E.ORDEN.indexOf(S.seccion) < 0) S.seccion = 'objetivo';
+  if (!S.fase) S.fase = S.messages.length > 1 ? 'chat' : 'idioma';
   if (S.v !== 2) { // conversación iniciada con la versión anterior
     S.v = 2; S.fase = 'chat'; S.ver = 'es'; S.saved = {}; S.tr = null;
     if (E.ORDEN.indexOf(S.seccion) < 0) S.seccion = 'datos';
@@ -102,7 +105,7 @@
     if (!busy) {
       if (S.fase === 'idioma') LANG_CHIPS.forEach(function (c) { chip(c.t, function () { pickLang(c.l, c.t); }); });
       else if (S.error) chip('Reintentar', retry);
-      else arr(S.quick).forEach(function (c) { chip(c, function () { $('msg').value = c; submit(); }); });
+      else arr(S.quick).forEach(function (c) { chip(c, c === SUBIR ? function () { $('cvFile').click(); } : function () { $('msg').value = c; submit(); }); });
     }
     $('send').disabled = busy;
   }
@@ -112,7 +115,7 @@
     busy = true; S.error = ''; renderLog(); renderSteps();
     var payload = {
       messages: S.messages.map(function (m) { return { role: m.role, content: m.content }; }),
-      cv: S.cv, vacante: S.vacante, idioma: S.lang, seccion: S.seccion,
+      cv: S.cv, vacante: S.vacante, idioma: S.lang, seccion: S.seccion, modo: S.modo || 'nuevo',
       perfil: { nombre: jugador.nombre, liga: jugador.liga, carrera: jugador.carrera, ciudad: jugador.ciudad, ingles: jugador.ingles }
     };
     return post('/api/cv-coach', payload).then(function (d) {
@@ -131,7 +134,7 @@
     S.lang = l; S.ver = 'es'; S.fase = 'chat'; S.seccion = 'objetivo';
     S.messages.push({ role: 'user', content: text });
     S.messages.push({ role: 'assistant', content: intro(l) });
-    S.quick = ['Todavía no sé, quiero un CV general']; save(); renderAll();
+    S.quick = [SUBIR, 'Todavía no sé, quiero un CV general']; save(); renderAll();
   }
   function langFromText(v) {
     if (/ambos|los dos|both|espa[ñn]ol (e|y) ingl|ingl[eé]s (y|e) espa/i.test(v)) return 'ambos';
@@ -186,6 +189,61 @@
     } catch (e) { rec = null; }
   }
   function stopMic() { if (rec) { try { rec.stop(); } catch (e) {} rec = null; $('mic').setAttribute('aria-pressed', 'false'); } }
+
+  /* ---------- enlace de LinkedIn ---------- */
+  function syncLk() {
+    var d = (S.cv && S.cv.datos) || {};
+    if (document.activeElement !== $('lkUrl')) $('lkUrl').value = d.linkedin || '';
+    if (document.activeElement !== $('lkTxt')) $('lkTxt').value = d.linkedin_texto || '';
+    var n = TC.primerNombre() || str((d.nombre || '').split(/\s+/)[0]);
+    $('lkTxt').placeholder = 'LinkedIn ' + (n || 'Tu nombre');
+    $('lkState').textContent = d.linkedin ? 'Agregado ✓' : 'Agregar';
+  }
+  function setLk() {
+    S.cv.datos = S.cv.datos || {};
+    S.cv.datos.linkedin = str($('lkUrl').value).slice(0, 200);
+    S.cv.datos.linkedin_texto = str($('lkTxt').value).slice(0, 40);
+    if (S.cv.datos.linkedin && !S.cv.datos.linkedin_texto) S.cv.datos.linkedin_texto = $('lkTxt').placeholder;
+    save(); renderCV(); renderSteps(); $('lkState').textContent = S.cv.datos.linkedin ? 'Agregado ✓' : 'Agregar';
+  }
+  $('lkUrl').addEventListener('input', setLk);
+  $('lkTxt').addEventListener('input', setLk);
+  $('lkUrl').addEventListener('blur', function () { if (S.cv.datos && S.cv.datos.linkedin) { S.cv.datos.linkedin = urlLinkedin(S.cv.datos.linkedin); $('lkUrl').value = S.cv.datos.linkedin; save(); renderCV(); } });
+
+  /* ---------- subir CV existente para mejorarlo ---------- */
+  var SUBIR = 'Ya tengo CV: subirlo';
+  function primeraIncompleta() {
+    for (var i = 0; i < E.ORDEN.length; i++) { var k = E.ORDEN[i]; if (k !== 'revision' && !E.OPCIONAL[k] && !E.completa(S.cv, k)) return k; }
+    return 'revision';
+  }
+  function renderUp() { $('upTxt').innerHTML = hasContent() ? '<b>¿Tienes otro CV?</b> Súbelo en PDF y lo mejoramos (reemplaza el actual)' : '<b>¿Ya tienes CV?</b> Súbelo en PDF y lo mejoramos juntos'; }
+  $('cvFile').addEventListener('change', function () {
+    var f = this.files && this.files[0]; this.value = '';
+    if (!f || busy) return;
+    if (f.type !== 'application/pdf' && !/\.pdf$/i.test(f.name)) { toast('Sube tu CV en PDF. Si lo tienes en Word: Archivo → Guardar como → PDF.'); return; }
+    if (f.size > 3 * 1024 * 1024) { toast('El PDF pesa más de 3 MB. Sube una versión más ligera.'); return; }
+    if (S.fase === 'idioma') { S.lang = 'es'; S.ver = 'es'; S.fase = 'chat'; syncLang(); }
+    S.messages.push({ role: 'user', content: '📄 Subí mi CV: ' + f.name + '. Ayúdame a mejorarlo.' }); S.quick = [];
+    busy = true; S.error = ''; $('upBar').setAttribute('aria-busy', 'true'); renderLog();
+    var rd = new FileReader();
+    rd.onload = function () {
+      post('/api/cv-leer', { pdf_base64: String(rd.result) }).then(function (d) {
+        var cv = d.cv || {}; cv.datos = cv.datos || {};
+        if (!str(cv.datos.nombre)) cv.datos.nombre = jugador.nombre || '';
+        if (S.cv && S.cv.objetivo && !cv.objetivo) cv.objetivo = S.cv.objetivo;
+        S.cv = cv; S.modo = 'mejora'; S.tr = null; S.completo = false;
+        prevBullets = new Set(allBullets(cv));
+        S.seccion = primeraIncompleta();
+        busy = false; $('upBar').removeAttribute('aria-busy'); save(); renderAll();
+        toast('Ya leí tu CV. Tu coach te dirá cómo mejorarlo.');
+        call();
+      }).catch(function (e) {
+        busy = false; $('upBar').removeAttribute('aria-busy');
+        S.messages.pop(); S.error = e.message; save(); renderLog();
+      });
+    };
+    rd.readAsDataURL(f);
+  });
 
   /* ---------- vacante ---------- */
   $('vacante').value = S.vacante || '';
@@ -261,6 +319,15 @@
     return [[t.tec, h.tecnicas], [t.cert, h.certificaciones], [t.idi, h.idiomas], [t.inte, h.intereses]]
       .map(function (x) { return [x[0], arr(x[1]).map(str).filter(Boolean)]; }).filter(function (x) { return x[1].length; });
   }
+  /* ---------- contacto (LinkedIn como enlace con texto propio) ---------- */
+  function urlLinkedin(u) { u = str(u); if (!u) return ''; if (!/^https?:\/\//i.test(u)) u = 'https://' + u.replace(/^\/+/, ''); return u; }
+  function contactParts(cv) {
+    var d = cv.datos || {}, m = (S.cv && S.cv.datos) || {}, out = [];
+    [d.ciudad, d.correo, d.telefono].map(str).filter(Boolean).forEach(function (t) { out.push({ t: t }); });
+    var url = urlLinkedin(m.linkedin || d.linkedin); // el enlace siempre sale de la versión maestra
+    if (url) out.push({ t: str(m.linkedin_texto || d.linkedin_texto) || url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, ''), url: url });
+    return out;
+  }
   function renderCV() {
     var lang = viewLang(), cv = viewCV(), sh = $('sheet'), t = T[lang], hl = lang === master();
     sh.classList.toggle('loading', translating && lang !== master());
@@ -268,8 +335,14 @@
     if (!cv) { sh.appendChild(el('div', 'empty', translating ? 'Traduciendo tu CV al inglés…' : 'Toca «English» para generar la versión en inglés.')); return; }
     var d = cv.datos || {};
     sh.appendChild(el('div', 'nm', str(d.nombre) || t.name));
-    var contact = [d.ciudad, d.correo, d.telefono, d.linkedin].map(str).filter(Boolean).join(' · ');
-    sh.appendChild(el('div', 'ct', contact || t.ct));
+    var parts = contactParts(cv), ctEl = el('div', 'ct');
+    if (!parts.length) ctEl.textContent = t.ct;
+    parts.forEach(function (p, i) {
+      if (i) ctEl.appendChild(document.createTextNode(' · '));
+      if (p.url) { var a = el('a', null, p.t); a.href = p.url; a.target = '_blank'; a.rel = 'noopener'; ctEl.appendChild(a); }
+      else ctEl.appendChild(document.createTextNode(p.t));
+    });
+    sh.appendChild(ctEl);
     function sec(title, items, fn, emptyTxt) {
       sh.appendChild(el('h3', null, title));
       if (!items.length) { sh.appendChild(el('div', 'empty', emptyTxt)); return; }
@@ -428,8 +501,22 @@
     var d = cv.datos || {};
     doc.setFont('times', 'bold'); doc.setFontSize(18); doc.text(clean(d.nombre || '').toUpperCase(), 306, y + 6, { align: 'center' }); y += 22;
     doc.setFont('times', 'normal'); doc.setFontSize(10.5);
-    var ct = [d.ciudad, d.correo, d.telefono, d.linkedin].map(clean).filter(Boolean).join('  ·  ');
-    doc.splitTextToSize(ct, W).forEach(function (l) { doc.text(l, 306, y, { align: 'center' }); y += 13; });
+    var SEP = '  ·  ', lines = [[]], lw = 0, sepW = doc.getTextWidth(SEP);
+    contactParts(cv).forEach(function (p) { // reparte las partes en renglones centrados
+      p.t = clean(p.t); var w = doc.getTextWidth(p.t);
+      if (lines[lines.length - 1].length && lw + sepW + w > W) { lines.push([]); lw = 0; }
+      lw += (lines[lines.length - 1].length ? sepW : 0) + w; lines[lines.length - 1].push(p);
+    });
+    lines.forEach(function (ln) {
+      if (!ln.length) return;
+      var tw = ln.reduce(function (a, p, i) { return a + doc.getTextWidth(p.t) + (i ? sepW : 0); }, 0), x = 306 - tw / 2;
+      ln.forEach(function (p, i) {
+        if (i) { doc.text(SEP, x, y); x += sepW; }
+        if (p.url) doc.textWithLink(p.t, x, y, { url: p.url }); else doc.text(p.t, x, y);
+        x += doc.getTextWidth(p.t);
+      });
+      y += 13;
+    });
     var data = sections(cv, lang);
     function head(t) { need(30); y += 10; doc.setFont('times', 'bold'); doc.setFontSize(11.5); doc.text(t.toUpperCase(), M, y); y += 3; doc.setLineWidth(.8); doc.line(M, y, M + W, y); y += 13; }
     data.secs.forEach(function (s) {
@@ -465,7 +552,13 @@
     function p(runs, opt) { return new X.Paragraph(Object.assign({ children: runs }, opt || {})); }
     function r(t, o) { return new X.TextRun(Object.assign({ text: t }, o || {})); }
     kids.push(p([r(clean(d.nombre || '').toUpperCase(), { bold: true, size: 32 })], { alignment: X.AlignmentType.CENTER }));
-    kids.push(p([r([d.ciudad, d.correo, d.telefono, d.linkedin].map(clean).filter(Boolean).join('  ·  '), { size: 21 })], { alignment: X.AlignmentType.CENTER, spacing: { after: 120 } }));
+    var ctRuns = [];
+    contactParts(cv).forEach(function (q, i) {
+      if (i) ctRuns.push(r('  ·  ', { size: 21 }));
+      if (q.url) ctRuns.push(new X.ExternalHyperlink({ link: q.url, children: [r(clean(q.t), { size: 21, underline: {} })] }));
+      else ctRuns.push(r(clean(q.t), { size: 21 }));
+    });
+    kids.push(p(ctRuns, { alignment: X.AlignmentType.CENTER, spacing: { after: 120 } }));
     function head(t) { kids.push(p([r(t.toUpperCase(), { bold: true, size: 23 })], { spacing: { before: 200, after: 80 }, border: { bottom: { color: '000000', space: 1, style: X.BorderStyle.SINGLE, size: 6 } } })); }
     var tabs = { tabStops: [{ type: X.TabStopType.RIGHT, position: RIGHT }] };
     data.secs.forEach(function (s) {
@@ -495,6 +588,6 @@
     $('vacante').value = ''; prevBullets = new Set(); save(); $('reset').dataset.armed = ''; $('reset').textContent = 'Empezar un CV nuevo'; renderAll();
   };
 
-  function renderAll() { syncLang(); renderLog(); renderSteps(); renderVer(); renderCV(); renderAts(); }
+  function renderAll() { syncLang(); renderLog(); renderSteps(); renderVer(); renderCV(); renderAts(); syncLk(); renderUp(); }
   renderAll();
 })();
