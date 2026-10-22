@@ -156,6 +156,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 .consent input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--blue)}
 .consent a{color:var(--blue);font-weight:700}
 .err{margin:0;font:700 13px var(--body);color:#B4531A}
+.gate{margin:0;padding:12px 16px;border-radius:14px;background:#FFF1E6;color:#B4531A;font:700 14px/1.4 var(--body)}
 .f.bad{border-bottom-color:#E0582B}.f.bad label{color:#B4531A}
 fieldset.bad .seg{box-shadow:0 0 0 3px #E0582B;border-radius:14px}
 .req{color:var(--orange);font-style:normal}
@@ -304,6 +305,7 @@ fieldset.bad .seg{box-shadow:0 0 0 3px #E0582B;border-radius:14px}
         <div class="eyebrow">FICHAJE · PASO 1 DE 2</div>
         <h2 id="fichaTitle">Ficha de jugador</h2>
       </div>
+      <p class="gate" id="gate" hidden>Para entrar al camp primero llena tu ficha. Es rápido y es gratis.</p>
       <div class="grid">
         <div class="f"><label for="nombre"><em>01</em> · NOMBRE COMPLETO</label><input id="nombre" type="text" autocomplete="name" placeholder="Como saldrá en tu cromo"></div>
         <div class="f"><label for="correo"><em>02</em> · CORREO</label><input id="correo" type="email" autocomplete="email" placeholder="tu@correo.com"></div>
@@ -465,6 +467,7 @@ fieldset.bad .seg{box-shadow:0 0 0 3px #E0582B;border-radius:14px}
     $('pvSub').textContent=`${state.liga} · ${lugar}`;
   }
   [nombre,pos,ciudad,estado].forEach(el=>el.addEventListener('input',upd));
+  if(/[?&]ficha=1/.test(location.search)&&!TC.jugador()){$('gate').hidden=false}
   ['nombre','correo','cel','pos','estado','ciudad'].forEach(id=>['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{$(id).closest('.f').classList.remove('bad');$(id).removeAttribute('aria-invalid')})));
   $('eng').addEventListener('click',()=>$('engSet').classList.remove('bad'));
   function group(id,key){
