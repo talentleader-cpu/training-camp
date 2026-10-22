@@ -24,6 +24,8 @@ Pantallas (mismo nombre en `/web` y `/app`):
 | `resumen` | La Cancha (entrevista) | Resumen del partido: momentum, revisión VAR, stats por competencia, plan de entrenamiento. |
 | `cromo` | — | Cromo coleccionable, ADN de jugador, álbum de coaches e historial. |
 
+Comunidad: botón para unirse al grupo de WhatsApp en la portada, en "¿Qué entrenas hoy?" y en el cromo.
+
 Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de CV), box (preguntas difíciles), golf (nivel ejecutivo y negociación), básquetbol (análisis post-partido).
 
 ## Correr en local

@@ -173,6 +173,9 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   .cromo-wrap{position:relative;left:auto;top:auto;transform:none;opacity:1;pointer-events:auto;margin:0 auto;padding:40% 16px 64px}
   .card .shine,.hint i::after{animation:none}
 }
+.btn.wa{background:#25D366;color:#00273F}.btn.wa:hover{background:#3BE07A}
+.wa-line{display:flex;align-items:center;justify-content:center;gap:10px;padding:12px 14px;border-radius:14px;background:#E6F9EE;color:var(--ink);font:600 13px/1.4 var(--body);text-decoration:none}
+.wa-line svg{flex:none;color:#128C4A}.wa-line b{color:#0B6B37}
 </style>
 </head>
 <body>
@@ -323,13 +326,14 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
       <p class="err" id="err" hidden></p>
       <button class="btn" type="submit">Sellar mi fichaje</button>
       <div class="small">Tus datos personales solo los ve el equipo de Wexpand. Nunca los vendemos.</div>
+      <a class="wa-line" href="https://chat.whatsapp.com/EYc03Tpy4Jq5jjlr5EIv8L" target="_blank" rel="noopener"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"></path><path d="M9 9.2c0 3 2.3 5.6 5.4 5.9l1.1-1.3-1.8-.9-.8.8c-1-.5-1.9-1.4-2.4-2.4l.8-.8-.9-1.8L9 9.2z" fill="currentColor" stroke="none"></path></svg><span>¿Quieres conocer al resto del equipo? <b>Únete a la comunidad en WhatsApp</b></span></a>
     </form>
 
     <div class="done" id="done" hidden>
       <div class="eyebrow">FICHAJE CONFIRMADO</div>
       <h2 style="margin:0;font:400 clamp(44px,6vw,72px)/.9 var(--display)">¡Bienvenid@ al camp!</h2>
       <p>Tu cromo ya está en el álbum. Siguiente paso: arma tu CV con tu coach o entrena tu primera entrevista.</p>
-      <a class="btn" id="goHub" href="/web/hub.html">Entrar al camp</a>
+      <div style="display:flex;flex-wrap:wrap;gap:12px"><a class="btn" id="goHub" href="/web/hub.html">Entrar al camp</a><a class="btn wa" href="https://chat.whatsapp.com/EYc03Tpy4Jq5jjlr5EIv8L" target="_blank" rel="noopener"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"></path><path d="M9 9.2c0 3 2.3 5.6 5.4 5.9l1.1-1.3-1.8-.9-.8.8c-1-.5-1.9-1.4-2.4-2.4l.8-.8-.9-1.8L9 9.2z" fill="currentColor" stroke="none"></path></svg>Unirme a la comunidad</a></div>
     </div>
   </div>
 </section>
