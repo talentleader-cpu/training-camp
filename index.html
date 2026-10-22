@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Training Camp de Wexpand: arma tu CV y entrena tus entrevistas con un coach de IA. Gratis, en español e inglés.">
+<meta name="theme-color" content="#00274A">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<title>Training Camp · Wexpand</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
+<style>
+/* Layout: estadio de noche; una historia en scroll (cancha en 3D → gol → cromo) y luego la ficha con cromo en vivo */
+:root{
+  --night:#00274A; --deep:#00415E; --blue:#0653A1; --blue-2:#0A61B8;
+  --sky:#96D4E7; --cyan:#00A0C1; --orange:#F07E2E; --gold:#F7A700;
+  --grass:#2F8F55; --grass-2:#37A062; --fairway:#58BE79; --green:#7DD394; --sand:#EBD9A6; --paper:#F4FAFD; --ink:#00415E; --ink-soft:#355E72; --line:#CFE6EF; --white:#FFFFFF;
+  --display:'Bebas Neue', 'Oswald', 'Arial Narrow', sans-serif;
+  --body:'Montserrat', 'Helvetica Neue', Arial, sans-serif;
+  color-scheme: dark;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{background:var(--night);color:var(--white);font-family:var(--body);overflow-x:hidden}
+img{max-width:100%}
+button,input,select{font:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+/* ---------- top bar ---------- */
+.bar{position:fixed;inset:0 0 auto;z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-top:calc(12px + env(safe-area-inset-top,0px));padding-bottom:12px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
+.bar > *{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:8px}
+.brand b{font:800 20px var(--body);letter-spacing:-.02em}
+.pill{padding:4px 10px;border-radius:999px;background:var(--orange);font:400 16px var(--display);letter-spacing:.06em;color:var(--white)}
+.score{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.35);font-family:var(--display);letter-spacing:.04em}
+.score span{display:flex;align-items:center;padding:4px 10px;font-size:20px}
+.score .t1{background:var(--white);color:var(--blue)}
+.score .n{background:var(--deep);min-width:64px;justify-content:center;font-size:24px}
+.score .t2{background:var(--blue)}
+.score .n.bump{animation:bump .6s ease}
+@keyframes bump{0%{transform:scale(1)}40%{transform:scale(1.5);background:var(--gold);color:var(--deep)}100%{transform:scale(1)}}
+.skip{height:40px;padding:0 14px;border-radius:999px;border:2px solid var(--white);background:rgba(0,39,74,.6);color:var(--white);font:700 13px var(--body);text-decoration:none;display:flex;align-items:center}
+
+/* ---------- story ---------- */
+.story{position:relative;height:640vh}
+.stage{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;
+  background:
+    radial-gradient(60% 45% at 15% 0%, rgba(150,212,231,.35), transparent 70%),
+    radial-gradient(60% 45% at 85% 0%, rgba(150,212,231,.35), transparent 70%),
+    linear-gradient(180deg, var(--night) 0%, var(--deep) 55%, var(--night) 100%);}
+.crowd{position:absolute;left:0;right:0;top:12%;height:16%;opacity:.5;
+  background:radial-gradient(circle at 10px 10px, rgba(150,212,231,.55) 2px, transparent 3px) 0 0/20px 20px,
+             radial-gradient(circle at 10px 10px, rgba(247,167,0,.45) 2px, transparent 3px) 10px 10px/20px 20px;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 40%,#000 70%,transparent);mask-image:linear-gradient(180deg,transparent,#000 40%,#000 70%,transparent)}
+.scene{position:absolute;inset:0;perspective:900px;perspective-origin:50% 0%}
+.field{position:absolute;left:50%;bottom:-8%;width:220vw;height:120vh;margin-left:-110vw;transform-origin:50% 100%;
+  transform:rotateX(var(--tilt,30deg));
+  background:repeating-linear-gradient(180deg,var(--grass) 0 9%,var(--grass-2) 9% 18%);border-top:6px solid rgba(255,255,255,.35)}
+.field svg{position:absolute;inset:0;width:100%;height:100%}
+
+.goal{position:absolute;left:50%;top:21%;width:min(40vw,360px);transform:translateX(-50%);transform-origin:50% 100%}
+.goal svg{display:block;width:100%;height:auto;overflow:visible}
+.goal .net{transform-origin:212px 30px;transform-box:view-box;transition:transform .15s}
+
+.hero{position:absolute;left:0;right:0;top:16%;text-align:center;z-index:5;will-change:transform,opacity;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.extrude{font:400 clamp(110px,24vw,300px)/.8 var(--display);color:var(--white);letter-spacing:.01em;margin:0;
+  text-shadow:1px 1px 0 #c9e7f1,2px 2px 0 #b3dcea,3px 3px 0 #96D4E7,4px 4px 0 #7cc4dc,5px 5px 0 #5bb2d0,6px 6px 0 #3b9fc3,7px 7px 0 #1f87b3,8px 8px 0 #0b6ea1,9px 9px 0 var(--blue),10px 10px 0 var(--deep),18px 22px 28px rgba(0,0,0,.45)}
+.extrude.outline{color:transparent;-webkit-text-stroke:3px var(--sky);text-shadow:none}
+.hero p{margin:18px auto 0;max-width:34ch;font:700 clamp(15px,1.8vw,20px)/1.45 var(--body);color:#E8F4FA;text-wrap:balance}
+.hint{position:absolute;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:6;display:flex;flex-direction:column;align-items:center;gap:6px;font:700 12px var(--body);letter-spacing:.14em}
+.hint i{width:26px;height:42px;border:3px solid var(--white);border-radius:14px;position:relative}
+.hint i::after{content:"";position:absolute;left:50%;top:7px;width:4px;height:9px;margin-left:-2px;border-radius:2px;background:var(--gold);animation:wheel 1.4s infinite}
+@keyframes wheel{0%{transform:translateY(0);opacity:1}100%{transform:translateY(14px);opacity:0}}
+
+.player{position:absolute;left:0;top:0;width:clamp(170px,26vw,320px);z-index:4;will-change:transform;
+  filter:drop-shadow(5px 0 0 #fff) drop-shadow(-5px 0 0 #fff) drop-shadow(0 5px 0 #fff) drop-shadow(0 -5px 0 #fff) drop-shadow(10px 14px 0 rgba(0,0,0,.3))}
+.ball{position:absolute;left:0;top:0;width:clamp(34px,4.6vw,54px);height:auto;z-index:4;will-change:transform}
+.shadow{position:absolute;left:0;top:0;width:clamp(60px,8vw,90px);height:14px;border-radius:50%;background:rgba(0,0,0,.35);filter:blur(3px);z-index:3}
+
+.caption{position:absolute;left:50%;bottom:16%;transform:translateX(-50%);width:min(560px,calc(100% - 32px));z-index:6;text-align:center;opacity:0;will-change:opacity,transform}
+.caption .tag{display:inline-block;padding:6px 12px;border-radius:8px 8px 0 0;background:var(--orange);font:400 18px var(--display);letter-spacing:.08em}
+.caption .txt{background:var(--white);color:var(--ink);padding:14px 18px;border-radius:0 14px 14px 14px;font:400 clamp(26px,3.6vw,40px)/1 var(--display);box-shadow:0 6px 0 rgba(0,0,0,.3);text-wrap:balance}
+
+.gol{position:absolute;left:0;right:0;top:24%;z-index:8;text-align:center;pointer-events:none;opacity:0}
+.gol span{display:inline-block;font:400 clamp(90px,17vw,230px)/.85 var(--display);color:var(--gold);
+  text-shadow:2px 2px 0 #f59a00,4px 4px 0 #f08e10,6px 6px 0 var(--orange),8px 8px 0 #d96a1c,10px 10px 0 #b4531a,12px 12px 0 var(--deep),24px 30px 40px rgba(0,0,0,.5)}
+.flash{position:absolute;inset:0;background:var(--white);opacity:0;z-index:7;pointer-events:none}
+canvas.confetti{position:absolute;inset:0;width:100%;height:100%;z-index:9;pointer-events:none}
+
+.mates{position:absolute;left:0;right:0;bottom:-2%;z-index:6;display:flex;justify-content:center;gap:clamp(4px,2vw,28px);pointer-events:none}
+.mates img{width:clamp(80px,14vw,190px);transform:translateY(120%);will-change:transform;
+  filter:drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff)}
+
+.cromo-wrap{position:absolute;left:50%;top:50%;z-index:10;perspective:1200px;transform:translate(-50%,-46%);opacity:0;pointer-events:none}
+.cromo3d{width:min(300px,74vw);transform-style:preserve-3d;will-change:transform}
+.cromo-wrap h2{margin:0 0 14px;text-align:center;font:400 clamp(30px,4.4vw,48px)/1 var(--display);text-wrap:balance}
+.cromo-wrap .cta{margin-top:18px;display:flex;justify-content:center}
+
+/* shared collectible card */
+.card{position:relative;border-radius:26px;background:var(--white);padding:8px;box-shadow:12px 16px 0 rgba(0,0,0,.4)}
+.card .in{position:relative;border-radius:20px;overflow:hidden;background:var(--blue);color:var(--white)}
+.card .shine{position:absolute;top:-40px;left:0;width:70px;height:560px;background:rgba(255,255,255,.18);animation:shine 3.6s ease-in-out infinite}
+@keyframes shine{0%{transform:translateX(-160%) rotate(20deg)}60%,100%{transform:translateX(340%) rotate(20deg)}}
+.card .top{position:relative;display:flex;justify-content:space-between;align-items:flex-start;padding:14px 16px 0}
+.card .ovr{display:flex;flex-direction:column;align-items:center}
+.card .ovr b{font:400 72px/.8 var(--display);color:var(--gold)}
+.card .ovr span{font:400 20px var(--display);letter-spacing:.1em}
+.card .lvl{margin-top:6px;padding:2px 8px;border-radius:6px;background:var(--sky);color:var(--ink);font:800 10px var(--body)}
+.card .photo{width:122px;height:122px;border-radius:50%;background:var(--cyan);border:4px solid var(--gold);display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.card .photo img{width:112%;max-width:none;margin-bottom:-8px}
+.card .name{position:relative;padding:12px 16px 0;font:400 36px/.95 var(--display);overflow-wrap:anywhere}
+.card .sub{position:relative;padding:2px 16px 0;font:600 12px var(--body);color:#CFE6EF}
+.card .stats{position:relative;margin-top:12px;background:var(--gold);color:var(--ink);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px 6px;padding:12px 16px}
+.card .stats div{display:flex;align-items:baseline;gap:5px}
+.card .stats b{font:400 26px var(--display)}
+.card .stats small{font:800 11px var(--body)}
+.card .foot{position:relative;display:flex;justify-content:space-between;padding:8px 16px;font:700 10px var(--body);letter-spacing:.08em;color:#CFE6EF}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;height:62px;padding:0 30px;border-radius:999px;border:0;background:var(--orange);color:var(--white);font:400 28px var(--display);letter-spacing:.04em;text-decoration:none;cursor:pointer;box-shadow:0 6px 0 var(--deep)}
+.btn:hover{background:#ff8c3a}
+.btn:active{transform:translateY(3px);box-shadow:0 3px 0 var(--deep)}
+
+/* ---------- ficha ---------- */
+.ficha{position:relative;background:var(--paper);color:var(--ink);border-radius:36px 36px 0 0;margin-top:-36px;z-index:2;
+  padding-block:56px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ficha-in{max-width:1140px;margin:0 auto;display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+.preview{flex:1 1 300px;min-width:0;position:sticky;top:calc(84px + env(safe-area-inset-top,0px));display:flex;flex-direction:column;align-items:center;gap:14px}
+.preview .card{width:min(320px,100%);transform:rotate(-3deg)}
+.preview p{margin:0;max-width:30ch;text-align:center;font:600 13px/1.45 var(--body);color:var(--ink-soft)}
+form{flex:2 1 460px;min-width:0;display:flex;flex-direction:column;gap:22px}
+.eyebrow{font:700 12px var(--body);letter-spacing:.14em;color:var(--blue)}
+form h2{margin:4px 0 0;font:400 clamp(44px,6vw,72px)/.9 var(--display);text-wrap:balance}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px 22px}
+.f{display:flex;flex-direction:column;gap:4px;border-bottom:3px solid var(--ink);padding-bottom:6px}
+.f label,.legend{font:700 11px var(--body);letter-spacing:.12em;color:var(--blue)}
+.f label em,.legend em{font-style:normal;color:var(--orange)}
+.f input,.f select{height:40px;border:0;background:transparent;color:var(--ink);font:600 18px var(--body);padding:0}
+.f input::placeholder{color:#7B97A8}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+.legend{padding:0;margin-bottom:10px}
+.seg{display:grid;gap:8px}
+.seg.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.seg.c6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.seg button{min-height:56px;border-radius:14px;border:2px solid var(--ink);background:var(--white);color:var(--ink);font:700 12px var(--body);letter-spacing:.04em;cursor:pointer;padding:6px}
+.seg.c6 button{font:400 22px var(--display);border-color:var(--line)}
+.seg button[aria-pressed="true"]{background:var(--blue);border-color:var(--blue);color:var(--white);box-shadow:0 4px 0 var(--ink)}
+.seg.c6 button[aria-pressed="true"]{background:var(--orange);border-color:var(--orange)}
+.consent{display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;background:var(--white);border:2px dashed var(--sky)}
+.consent label{display:flex;gap:12px;align-items:flex-start;font:500 13px/1.45 var(--body);cursor:pointer}
+.consent input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--blue)}
+.consent a{color:var(--blue);font-weight:700}
+.err{margin:0;font:700 13px var(--body);color:#B4531A}
+.small{font:500 12px var(--body);color:var(--ink-soft);text-align:center}
+.done{display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.done h2{color:var(--blue)}
+.done p{margin:0;max-width:44ch;font:600 16px/1.5 var(--body);color:var(--ink-soft)}
+
+@media (max-width:520px){
+  .score .t2{display:none}
+  .brand .pill{display:none}
+  .seg.c6{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .preview{position:relative;top:0}
+}
+@media (prefers-reduced-motion: reduce){
+  .story{height:auto}
+  .stage{position:relative;height:auto;min-height:100svh}
+  .player,.ball,.shadow,.caption,.gol,.mates,.hint{display:none}
+  .cromo-wrap{position:relative;left:auto;top:auto;transform:none;opacity:1;pointer-events:auto;margin:0 auto;padding:40% 16px 64px}
+  .card .shine,.hint i::after{animation:none}
+}
+</style>
+</head>
+<body>
+
+
+<header class="bar">
+  <div class="brand"><b>wexpand</b><span class="pill">TRAINING CAMP</span></div>
+  <div class="score" aria-label="Marcador"><span class="t1">HOYO 1</span><span class="n" id="score">PAR 3</span><span class="t2">GOLPES <b id="strokes" style="font-weight:400;margin-left:6px">0</b></span></div>
+  <a class="skip" href="#ficha">Ir a mi ficha</a>
+</header>
+
+<main>
+<section class="story" id="story" aria-label="Historia: tu primer hoyo">
+  <div class="stage" id="stage">
+    <div class="crowd" aria-hidden="true"></div>
+    <div class="scene" aria-hidden="true">
+      <div class="field" id="field">
+        <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
+          <path d="M430 600 C 400 470, 360 360, 420 240 C 470 140, 450 80, 470 30 L 560 30 C 590 90, 600 160, 560 250 C 520 350, 600 470, 590 600 Z" fill="#58BE79"></path>
+          <path d="M455 600 C 430 470, 395 360, 450 240 C 490 150, 478 85, 490 30" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="14"></path>
+          <ellipse cx="510" cy="55" rx="95" ry="38" fill="#7DD394" stroke="rgba(255,255,255,.5)" stroke-width="2"></ellipse>
+          <ellipse cx="610" cy="95" rx="38" ry="14" fill="#EBD9A6"></ellipse>
+          <ellipse cx="400" cy="70" rx="30" ry="11" fill="#EBD9A6"></ellipse>
+          <ellipse cx="650" cy="300" rx="70" ry="26" fill="#EBD9A6"></ellipse>
+          <path d="M210 260 C 250 210, 360 220, 370 270 C 380 320, 260 340, 220 310 C 195 292, 195 275, 210 260 Z" fill="#00A0C1" stroke="rgba(255,255,255,.45)" stroke-width="3"></path>
+          <rect x="470" y="540" width="70" height="40" rx="6" fill="#7DD394" stroke="rgba(255,255,255,.5)" stroke-width="2"></rect>
+        </svg>
+      </div>
+    </div>
+
+    <div class="goal" id="goal" aria-hidden="true">
+      <svg viewBox="0 0 420 170">
+        <ellipse cx="210" cy="158" rx="150" ry="14" fill="rgba(0,0,0,.18)"></ellipse>
+        <ellipse cx="210" cy="158" rx="16" ry="6" fill="#1d1d1b"></ellipse>
+        <line x1="210" y1="158" x2="210" y2="8" stroke="#FFFFFF" stroke-width="5" stroke-linecap="round"></line>
+        <g class="net" id="net">
+          <path d="M212 10 L300 30 L212 52 Z" fill="#F07E2E" stroke="#1d1d1b" stroke-width="3" stroke-linejoin="round"></path>
+          <text x="236" y="38" font-family="Bebas Neue, Arial Narrow, sans-serif" font-size="22" fill="#FFFFFF">1</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="hero" id="hero">
+      <h1 class="extrude outline" style="margin:0">TU</h1>
+      <h1 class="extrude">DEBUT</h1>
+      <p>Practica entrevistas reales con un coach de IA. Baja para hacer tu primer swing.</p>
+    </div>
+
+    <div class="shadow" id="shadow" aria-hidden="true"></div>
+    <img class="player" id="player" src="/assets/wx-golf.png" alt="Wexpancito golfista preparando su swing">
+    <svg class="ball" id="ball" viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="28" fill="#fff" stroke="#1d1d1b" stroke-width="4"></circle>
+      <g fill="#1d1d1b"><circle cx="24" cy="22" r="3"></circle><circle cx="38" cy="20" r="3"></circle><circle cx="44" cy="33" r="3"></circle><circle cx="30" cy="34" r="3"></circle><circle cx="22" cy="44" r="3"></circle><circle cx="38" cy="46" r="3"></circle></g>
+    </svg>
+
+    <div class="caption" id="cap1"><span class="tag">HOYO 1 · PAR 3</span><div class="txt">Cada entrevista es un hoyo por jugar.</div></div>
+    <div class="caption" id="cap2"><span class="tag">EL SWING</span><div class="txt">Tu coach lee tu CV y la vacante, y te entrena para ella.</div></div>
+    <div class="caption" id="cap3"><span class="tag">EN EL GREEN</span><div class="txt">En español o en inglés. Gratis.</div></div>
+
+    <div class="flash" id="flash"></div>
+    <div class="gol" id="gol" aria-hidden="true"><span>¡HOYO<br>EN UNO!</span></div>
+    <canvas class="confetti" id="confetti" aria-hidden="true"></canvas>
+
+    <div class="mates" id="mates" aria-hidden="true">
+      <img src="/assets/wx-tenis.png" alt="">
+      <img src="/assets/wx-basquetbol.png" alt="">
+      <img src="/assets/wx-futbol.png" alt="">
+      <img src="/assets/wx-box.png" alt="">
+    </div>
+
+    <div class="cromo-wrap" id="cromoWrap">
+      <h2>Tu cromo ya está impreso.<br>Solo falta tu ficha.</h2>
+      <div class="cromo3d" id="cromo3d">
+        <div class="card">
+          <div class="in">
+            <div class="shine"></div>
+            <div class="top">
+              <div class="ovr"><b>??</b><span>DEBUT</span><span class="lvl">NUEVO FICHAJE</span></div>
+              <div class="photo"><img src="/assets/wx-golf.png" alt=""></div>
+            </div>
+            <div class="name">Tu nombre aquí</div>
+            <div class="sub">Tu liga · tu posición · tu ciudad</div>
+            <div class="stats"><div><b>?</b><small>COM</small></div><div><b>?</b><small>EQP</small></div><div><b>?</b><small>TÉC</small></div><div><b>?</b><small>RES</small></div><div><b>?</b><small>ENG</small></div><div><b>?</b><small>RSL</small></div></div>
+            <div class="foot"><span>wexpand training camp</span><span>#001 / 2026</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="cta"><a class="btn" href="#ficha" id="ctaFicha">Llenar mi ficha ↓</a></div>
+    </div>
+
+    <div class="hint" id="hint"><i></i>BAJA PARA TU SWING</div>
+  </div>
+</section>
+
+<section class="ficha" id="ficha" aria-labelledby="fichaTitle">
+  <div class="ficha-in">
+    <aside class="preview" aria-label="Vista previa de tu cromo">
+      <div class="card">
+        <div class="in">
+          <div class="shine"></div>
+          <div class="top">
+            <div class="ovr"><b>??</b><span id="pvPos">DEBUT</span><span class="lvl" id="pvEng">INGLÉS ?</span></div>
+            <div class="photo"><img src="/assets/wx-golf.png" alt=""></div>
+          </div>
+          <div class="name" id="pvName">Tu nombre aquí</div>
+          <div class="sub" id="pvSub">Estudiante · tu ciudad</div>
+          <div class="stats"><div><b>?</b><small>COM</small></div><div><b>?</b><small>EQP</small></div><div><b>?</b><small>TÉC</small></div><div><b>?</b><small>RES</small></div><div><b>?</b><small>ENG</small></div><div><b>?</b><small>RSL</small></div></div>
+          <div class="foot"><span>wexpand training camp</span><span>#001 / 2026</span></div>
+        </div>
+      </div>
+      <p>Tu cromo se arma mientras llenas tu ficha. Tus stats se revelan en tu primer partido.</p>
+    </aside>
+
+    <form id="form" novalidate>
+      <div>
+        <div class="eyebrow">FICHAJE · PASO 1 DE 2</div>
+        <h2 id="fichaTitle">Ficha de jugador</h2>
+      </div>
+      <div class="grid">
+        <div class="f"><label for="nombre"><em>01</em> · NOMBRE COMPLETO</label><input id="nombre" type="text" autocomplete="name" placeholder="Como saldrá en tu cromo"></div>
+        <div class="f"><label for="correo"><em>02</em> · CORREO</label><input id="correo" type="email" autocomplete="email" placeholder="tu@correo.com"></div>
+        <div class="f"><label for="cel"><em>03</em> · CELULAR CON WHATSAPP</label><input id="cel" type="tel" autocomplete="tel" placeholder="33 1234 5678"></div>
+        <div class="f"><label for="pos"><em>04</em> · CARRERA O INDUSTRIA</label>
+          <select id="pos"><option value="">Elige tu posición…</option><option value="DATA">Datos y analítica</option><option value="TECH">Ingeniería y software</option><option value="RH">Recursos humanos</option><option value="VENTAS">Ventas y comercial</option><option value="FIN">Finanzas y contabilidad</option><option value="MKT">Marketing y comunicación</option><option value="OPS">Operaciones y logística</option><option value="DISEÑO">Diseño</option></select></div>
+        <div class="f"><label for="estado"><em>05</em> · ESTADO</label>
+          <select id="estado"><option value="">Elige tu estado…</option><option>Aguascalientes</option><option>Baja California</option><option>Chihuahua</option><option>Ciudad de México</option><option>Coahuila</option><option>Estado de México</option><option>Guanajuato</option><option>Jalisco</option><option>Michoacán</option><option>Nuevo León</option><option>Puebla</option><option>Querétaro</option><option>Sonora</option><option>Veracruz</option><option>Yucatán</option><option>Otro</option></select></div>
+        <div class="f"><label for="ciudad"><em>06</em> · CIUDAD</label><input id="ciudad" type="text" autocomplete="address-level2" placeholder="Tu ciudad"></div>
+      </div>
+      <fieldset>
+        <legend class="legend"><em>07</em> · ¿EN QUÉ LIGA JUEGAS?</legend>
+        <div class="seg c3" id="liga">
+          <button type="button" aria-pressed="true" data-v="Estudiante">ESTUDIANTE</button>
+          <button type="button" aria-pressed="false" data-v="Recién egresado">RECIÉN EGRESADO</button>
+          <button type="button" aria-pressed="false" data-v="Profesionista">PROFESIONISTA</button>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="legend"><em>08</em> · NIVEL DE INGLÉS (opcional)</legend>
+        <div class="seg c6" id="eng">
+          <button type="button" aria-pressed="false" data-v="A1">A1</button><button type="button" aria-pressed="false" data-v="A2">A2</button><button type="button" aria-pressed="false" data-v="B1">B1</button><button type="button" aria-pressed="false" data-v="B2">B2</button><button type="button" aria-pressed="false" data-v="C1">C1</button><button type="button" aria-pressed="false" data-v="C2">C2</button>
+        </div>
+      </fieldset>
+      <div class="consent">
+        <label><input id="c1" type="checkbox"><span>Acepto el <a href="#aviso">aviso de privacidad</a>. <strong>(obligatorio)</strong></span></label>
+        <label><input id="c2" type="checkbox"><span>Quiero que Wexpand me contacte sobre vacantes y la comunidad. (opcional)</span></label>
+        <label><input id="c3" type="checkbox"><span>Acepto que mis entrevistas, de forma anónima, se usen para mejorar la IA. (opcional)</span></label>
+      </div>
+      <p class="err" id="err" hidden></p>
+      <button class="btn" type="submit">Sellar mi fichaje</button>
+      <div class="small">Tus datos personales solo los ve el equipo de Wexpand. Nunca los vendemos.</div>
+    </form>
+
+    <div class="done" id="done" hidden>
+      <div class="eyebrow">FICHAJE CONFIRMADO</div>
+      <h2 style="margin:0;font:400 clamp(44px,6vw,72px)/.9 var(--display)">¡Bienvenid@ al camp!</h2>
+      <p>Tu cromo ya está en el álbum. Siguiente paso: arma tu CV con tu coach o entrena tu primera entrevista.</p>
+      <a class="btn" id="goHub" href="/web/hub.html">Entrar al camp</a>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+(function(){
+  const $=id=>document.getElementById(id);
+  const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+  const seg=(p,a,b)=>clamp((p-a)/(b-a));
+  const lerp=(a,b,t)=>a+(b-a)*t;
+  const ease=t=>1-Math.pow(1-t,3);
+  const back=t=>{const c=1.70158;return 1+(c+1)*Math.pow(t-1,3)+c*Math.pow(t-1,2)};
+  const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  const story=$('story'),field=$('field'),hero=$('hero'),player=$('player'),ball=$('ball'),shadow=$('shadow'),
+        goal=$('goal'),net=$('net'),gol=$('gol'),flash=$('flash'),hint=$('hint'),score=$('score'),
+        cromoWrap=$('cromoWrap'),cromo3d=$('cromo3d'),mates=[...document.querySelectorAll('#mates img')],
+        caps=[$('cap1'),$('cap2'),$('cap3')],cv=$('confetti'),ctx=cv.getContext('2d');
+
+  let parts=[],scored=false,raf=0;
+  function sizeCanvas(){const r=window.devicePixelRatio||1;cv.width=cv.clientWidth*r;cv.height=cv.clientHeight*r;ctx.setTransform(r,0,0,r,0,0)}
+  function burst(){
+    const W=cv.clientWidth,H=cv.clientHeight,cols=['#F7A700','#F07E2E','#96D4E7','#FFFFFF','#00A0C1'];
+    for(let i=0;i<180;i++){parts.push({x:W/2+(Math.random()-.5)*W*.3,y:H*.38,vx:(Math.random()-.5)*16,vy:-Math.random()*16-4,s:6+Math.random()*8,r:Math.random()*6,vr:(Math.random()-.5)*.4,c:cols[i%cols.length],life:1})}
+    if(!raf) tick();
+  }
+  function tick(){
+    const W=cv.clientWidth,H=cv.clientHeight;ctx.clearRect(0,0,W,H);
+    parts=parts.filter(p=>p.life>0&&p.y<H+40);
+    for(const p of parts){p.vy+=.45;p.vx*=.99;p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;p.life-=.006;
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.globalAlpha=Math.max(0,p.life);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore()}
+    raf=parts.length?requestAnimationFrame(tick):0;
+  }
+
+  function place(el,x,y,s,r){el.style.transform=`translate3d(${x}px,${y}px,0) translate(-50%,-50%) scale(${s}) rotate(${r||0}deg)`}
+
+  function render(){
+    const rect=story.getBoundingClientRect(),total=story.offsetHeight-window.innerHeight;
+    const p=clamp(-rect.top/total);
+    const W=window.innerWidth,H=window.innerHeight;
+
+    // hero + field tilt
+    const h=seg(p,.03,.16);
+    hero.style.opacity=1-h;
+    hero.style.transform=`translateY(${-h*H*.25}px) perspective(700px) rotateX(${h*35}deg) scale(${1+h*.25})`;
+    hint.style.opacity=1-seg(p,0,.04);
+    field.style.setProperty('--tilt',`${lerp(10,62,ease(seg(p,0,.2)))}deg`);
+    goal.style.opacity=seg(p,.08,.18);
+    goal.style.transform=`translateX(-50%) scale(${lerp(.6,1,ease(seg(p,.08,.2)))})`;
+
+    // golfer walks up to the tee (0.14 → 0.34), sets, swings (0.38 → 0.44)
+    const walk=ease(seg(p,.14,.34));
+    const px=lerp(-.12*W,.36*W,walk), py=.70*H, ps=1;
+    const bob=Math.sin(p*240)*5*(walk>0&&walk<1?1:0);
+    const back_=seg(p,.36,.41), thru=seg(p,.41,.44);
+    const swing=-14*back_+38*thru;
+    player.style.opacity=seg(p,.12,.16)*(1-seg(p,.78,.84));
+    place(player,px,py+bob,ps,swing);
+
+    // golf ball: on the tee, then a high arc to the green, bounce and roll into the cup
+    const g=goal.getBoundingClientRect();
+    const teeX=.36*W+W*.11, teeY=.70*H+H*.17;
+    const cupX=g.left+g.width*.5, cupY=g.top+g.height*.93;
+    const landX=lerp(teeX,cupX,.86), landY=cupY+H*.015;
+    const fly=seg(p,.44,.56), fe=ease(fly);
+    const roll=seg(p,.56,.60);
+    let bx,by,bs;
+    if(p<.56){bx=lerp(teeX,landX,fe);by=lerp(teeY,landY,fe)-Math.sin(Math.PI*fly)*H*.42;bs=lerp(1,.5,fe)}
+    else{bx=lerp(landX,cupX,roll);by=landY-Math.abs(Math.sin(roll*Math.PI*2))*H*.02*(1-roll);bs=lerp(.5,.42,roll)*(1-seg(p,.59,.61)*.9)}
+    ball.style.opacity=seg(p,.12,.16)*(1-seg(p,.60,.62));
+    place(ball,bx,by,bs,p*1600);
+    shadow.style.opacity=ball.style.opacity*.7;
+    place(shadow,bx,p<.56?lerp(teeY+H*.03,landY+H*.01,fe):by+H*.012,bs,0);
+
+    // captions
+    const show=(el,a,b)=>{const t=seg(p,a,a+.03)*(1-seg(p,b-.03,b));el.style.opacity=t;el.style.transform=`translateX(-50%) translateY(${(1-t)*24}px)`};
+    show(caps[0],.16,.32); show(caps[1],.32,.50); show(caps[2],.68,.80);
+
+    // goal moment
+    const hit=seg(p,.60,.64);
+    flash.style.opacity=hit>0&&hit<1?(1-Math.abs(hit-.3)/.7)*.8:0;
+    net.style.transform=`rotate(${Math.sin(p*120)*4+Math.sin(Math.PI*seg(p,.59,.70))*-14}deg)`;
+    const gt=seg(p,.60,.67), gout=seg(p,.72,.77);
+    gol.style.opacity=(gt>0?1:0)*(1-gout);
+    gol.style.transform=`scale(${back(gt)*(1+gout*.4)}) rotate(${-6+gt*4}deg)`;
+    if(p>=.60&&!scored){scored=true;score.textContent='HOYO EN UNO';document.getElementById('strokes').textContent='1';score.classList.remove('bump');void score.offsetWidth;score.classList.add('bump');burst()}
+    if(p<.56&&scored){scored=false;score.textContent='PAR 3';document.getElementById('strokes').textContent='0'}
+
+    // teammates
+    mates.forEach((m,i)=>{const t=back(seg(p,.62+i*.015,.70+i*.015))*(1-seg(p,.80,.86));m.style.transform=`translateY(${(1-t)*120}%) rotate(${(i%2?6:-6)*t}deg)`});
+
+    // cromo flips in
+    const c=seg(p,.80,.95);
+    cromoWrap.style.opacity=seg(p,.79,.83);
+    cromoWrap.style.pointerEvents=c>.6?'auto':'none';
+    cromo3d.style.transform=`rotateY(${lerp(-200,0,ease(c))}deg) rotateX(${lerp(25,0,ease(c))}deg) scale(${lerp(.6,1,ease(c))})`;
+    field.parentElement.style.opacity=1-seg(p,.82,.92)*.6;
+    goal.style.filter=`brightness(${1-seg(p,.82,.92)*.5})`;
+  }
+
+  let ticking=false;
+  function onScroll(){if(!ticking){ticking=true;requestAnimationFrame(()=>{render();ticking=false})}}
+  if(!reduce){
+    sizeCanvas();render();
+    window.addEventListener('scroll',onScroll,{passive:true});
+    window.addEventListener('resize',()=>{sizeCanvas();render()});
+  }
+
+  // ----- ficha: cromo en vivo -----
+  const nombre=$('nombre'),pos=$('pos'),ciudad=$('ciudad'),estado=$('estado');
+  const state={liga:'Estudiante',eng:''};
+  function upd(){
+    $('pvName').textContent=nombre.value.trim()||'Tu nombre aquí';
+    $('pvPos').textContent=pos.value||'DEBUT';
+    $('pvEng').textContent=state.eng?`INGLÉS ${state.eng}`:'INGLÉS ?';
+    const lugar=[ciudad.value.trim(),estado.value].filter(Boolean).join(', ')||'tu ciudad';
+    $('pvSub').textContent=`${state.liga} · ${lugar}`;
+  }
+  [nombre,pos,ciudad,estado].forEach(el=>el.addEventListener('input',upd));
+  function group(id,key){
+    $(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+      $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));state[key]=b.dataset.v;upd()});
+  }
+  group('liga','liga');group('eng','eng');upd();
+
+  $('form').addEventListener('submit',e=>{
+    e.preventDefault();
+    const err=$('err'),miss=[];
+    if(!nombre.value.trim())miss.push('tu nombre');
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('correo').value.trim()))miss.push('un correo válido');
+    if(!$('c1').checked)miss.push('aceptar el aviso de privacidad');
+    if(miss.length){err.textContent=`Para sellar tu fichaje falta ${miss.join(', ')}.`;err.hidden=false;return}
+    err.hidden=true;$('form').hidden=true;$('done').hidden=false;
+    if(!reduce){const st=$('stage').getBoundingClientRect();if(st.bottom>0)burst()}
+    $('done').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
+  });
+})();
+  var go=document.getElementById('goHub');
+  if(go&&window.innerWidth<768){go.href='/app/hub.html'}
+</script>
+
+</body>
+</html>

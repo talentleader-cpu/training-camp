@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    { "source": "/web", "destination": "/web/hub" },
+    { "source": "/app", "destination": "/app/hub" }
+  ]
+}

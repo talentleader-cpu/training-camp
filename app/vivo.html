@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Transmisión en vivo · Training Camp</title>
+<meta name="description" content="Training Camp de Wexpand: arma tu CV y entrena tus entrevistas con un coach de IA.">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<meta name="theme-color" content="#0653A1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Training Camp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#F7A700}a:hover{color:#FFC94D}
+@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tick{animation:tick 20s linear infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+.live{animation:pulse 1.2s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:rotate(-6deg) translateY(0)}50%{transform:rotate(-3deg) translateY(-6px)}}
+.bob{animation:bob 2.4s ease-in-out infinite}
+@keyframes lvl{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+.eq span{transform-origin:bottom;animation:lvl .9s ease-in-out infinite}
+</style>
+<style>
+html,body{background:#00273F;overflow-x:hidden}
+img{max-width:100%}
+:focus-visible{outline:3px solid #F7A700;outline-offset:3px}
+.proto-strip{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 14px;min-height:30px;padding:4px 16px;background:#00273F;color:#B9DDEB;font:600 12px 'Montserrat',Arial,sans-serif;letter-spacing:.02em}
+.proto-strip a{color:#FFFFFF;text-decoration:none}.proto-strip a[aria-current]{color:#F7A700;font-weight:800}
+.proto-strip span:nth-child(2){padding:2px 8px;border-radius:999px;background:#F07E2E;color:#fff;font-weight:800;letter-spacing:.06em;font-size:10px}
+.fin{position:fixed;left:50%;bottom:calc(64px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;display:flex;align-items:center;height:52px;padding:0 22px;border-radius:999px;background:#F07E2E;color:#fff;font:400 22px 'Bebas Neue',Arial Narrow,sans-serif;letter-spacing:.04em;text-decoration:none;box-shadow:0 5px 0 #00273F;white-space:nowrap}
+.fin[hidden]{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="proto-strip" role="note"><a href="/">Training Camp</a><span>Prototipo</span><span class="sw">Ver: <a href="/web/vivo.html">Web</a> · <a href="/app/vivo.html" aria-current="page">App</a></span></div>
+<div style="position: relative; width: 100%; max-width: 430px; margin: 0 auto; height: 844px; box-sizing: border-box; background: #00415E; color: #FFFFFF; font-family: 'Montserrat', sans-serif; overflow: hidden">
+
+<div style="position: absolute; left: 0; top: 0; width: 390px; height: 500px; background: #0653A1; overflow: hidden">
+<svg width="390" height="500" viewBox="0 0 390 500" aria-hidden="true" style="position: absolute; inset: 0; opacity: 0.22">
+<rect x="-20" y="60" width="430" height="520" fill="none" stroke="#96D4E7" stroke-width="3"></rect>
+<line x1="-20" y1="300" x2="410" y2="300" stroke="#96D4E7" stroke-width="3"></line>
+<circle cx="195" cy="300" r="90" fill="none" stroke="#96D4E7" stroke-width="3"></circle>
+<rect x="95" y="60" width="200" height="80" fill="none" stroke="#96D4E7" stroke-width="3"></rect>
+</svg>
+<div style="position: absolute; left: -30px; top: 250px; font: 400 230px/0.8 'Bebas Neue', sans-serif; color: transparent; -webkit-text-stroke: 2px rgba(150,212,231,0.35); white-space: nowrap">EN VIVO</div>
+<img class="bob" src="/assets/wx-futbol.png" alt="Wexpancito coach de fútbol, entrevistando" style="position: absolute; left: 22px; top: 118px; width: 260px; height: auto; filter: drop-shadow(4px 0 0 #FFFFFF) drop-shadow(-4px 0 0 #FFFFFF) drop-shadow(0 4px 0 #FFFFFF) drop-shadow(0 -4px 0 #FFFFFF) drop-shadow(8px 10px 0 rgba(0,25,40,0.35))">
+</div>
+
+<header style="position: absolute; left: 16px; right: 16px; top: 16px; display: flex; align-items: stretch; justify-content: space-between; gap: 8px">
+<div style="display: flex; align-items: stretch; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 0 rgba(0,25,40,0.35)">
+<span style="background: #FFFFFF; color: #0653A1; padding: 0 10px; display: flex; align-items: center; font: 800 14px 'Montserrat', sans-serif; letter-spacing: -0.02em">wx</span>
+<span style="background: #00415E; padding: 0 10px; display: flex; align-items: center; font: 400 22px 'Bebas Neue', sans-serif; letter-spacing: 0.04em">1T · 07:42</span>
+<span style="background: #F07E2E; padding: 0 10px; display: flex; align-items: center; gap: 6px; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em"><span class="live" style="width: 8px; height: 8px; border-radius: 50%; background: #FFFFFF"></span>EN VIVO</span>
+</div>
+<button type="button" aria-label="Salir del partido" style="width: 44px; height: 44px; border-radius: 12px; border: 0; background: rgba(0,65,94,0.75); color: #FFFFFF; display: flex; align-items: center; justify-content: center; cursor: pointer">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6 L18 18"></path><path d="M18 6 L6 18"></path></svg></button>
+</header>
+
+<aside aria-label="Estadísticas en vivo" style="position: absolute; right: 14px; top: 92px; width: 118px; background: rgba(0,65,94,0.88); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px; border: 2px solid #96D4E7">
+<div style="font: 400 16px 'Bebas Neue', sans-serif; letter-spacing: 0.08em; color: #96D4E7">STATS EN VIVO</div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="display: flex; justify-content: space-between; font: 700 10px 'Montserrat', sans-serif; letter-spacing: 0.06em"><span>CLARIDAD</span><span>82</span></div><div style="height: 6px; border-radius: 3px; background: #0653A1"><div style="width: 82%; height: 6px; border-radius: 3px; background: #F7A700"></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="display: flex; justify-content: space-between; font: 700 10px 'Montserrat', sans-serif; letter-spacing: 0.06em"><span>ESTRUCTURA</span><span>68</span></div><div style="height: 6px; border-radius: 3px; background: #0653A1"><div style="width: 68%; height: 6px; border-radius: 3px; background: #F7A700"></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="display: flex; justify-content: space-between; font: 700 10px 'Montserrat', sans-serif; letter-spacing: 0.06em"><span>RITMO</span><span>OK</span></div><div style="height: 6px; border-radius: 3px; background: #0653A1"><div style="width: 74%; height: 6px; border-radius: 3px; background: #96D4E7"></div></div></div>
+<div style="font: italic 700 11px/1.3 'Montserrat', sans-serif; color: #F7A700">Falta el resultado: ¡ciérralo con un número!</div>
+</aside>
+
+<section style="position: absolute; left: 16px; right: 16px; top: 410px">
+<div style="display: inline-flex; gap: 0; border-radius: 8px 8px 0 0; overflow: hidden">
+<span style="background: #F07E2E; padding: 6px 10px; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em">PREGUNTA 4/9</span>
+<span style="background: #F7A700; color: #00415E; padding: 6px 10px; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em">CONDUCTUAL</span>
+</div>
+<div style="background: #FFFFFF; color: #00415E; padding: 14px 16px; border-radius: 0 12px 0 0; box-shadow: 0 6px 0 rgba(0,25,40,0.35)">
+<p style="margin: 0; font: 400 30px/1.02 'Bebas Neue', sans-serif">Cuéntame de un proyecto donde trabajaste con datos incompletos. ¿Qué hiciste?</p>
+</div>
+<div style="background: #00A0C1; padding: 8px 16px; border-radius: 0 0 12px 12px; font: 700 12px 'Montserrat', sans-serif; letter-spacing: 0.02em">Resolución de problemas · Tip del coach: método STAR</div>
+</section>
+
+<div style="position: absolute; left: 16px; right: 16px; top: 624px; display: flex; gap: 10px; align-items: flex-start">
+<span style="flex: none; padding: 4px 8px; border-radius: 6px; background: #96D4E7; color: #00415E; font: 400 16px 'Bebas Neue', sans-serif; letter-spacing: 0.06em">TÚ</span>
+<p style="margin: 0; font: 500 14px/1.45 'Montserrat', sans-serif; color: #E8F4FA">“En mi servicio social, el registro de beneficiarios tenía muchos huecos, así que primero…”</p>
+</div>
+
+<div style="position: absolute; left: 16px; right: 16px; top: 700px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 12px">
+<button type="button" style="height: 48px; border-radius: 999px; border: 2px solid #96D4E7; background: transparent; color: #FFFFFF; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em; cursor: pointer">Tiempo fuera</button>
+<button type="button" id="mic" aria-label="Terminar mi respuesta" style="width: 84px; height: 84px; border-radius: 50%; border: 0; background: #F7A700; color: #00415E; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 0 0 6px rgba(247,167,0,0.28), 0 6px 0 rgba(0,25,40,0.4)">
+<span data-on="rec">
+<span class="eq" style="display: flex; align-items: flex-end; gap: 4px; height: 30px" aria-hidden="true"><span style="width: 5px; height: 30px; border-radius: 3px; background: #00415E"></span><span style="width: 5px; height: 30px; border-radius: 3px; background: #00415E; animation-delay: .2s"></span><span style="width: 5px; height: 30px; border-radius: 3px; background: #00415E; animation-delay: .4s"></span><span style="width: 5px; height: 30px; border-radius: 3px; background: #00415E; animation-delay: .1s"></span></span>
+</span>
+<span data-on="paused" hidden>
+<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11 a7 7 0 0 0 14 0"></path><path d="M12 18 V21"></path></svg>
+</span>
+</button>
+<button type="button" style="height: 48px; border-radius: 999px; border: 2px solid #96D4E7; background: transparent; color: #FFFFFF; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em; cursor: pointer">Repetir</button>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 40px; background: #F7A700; color: #00415E; overflow: hidden; display: flex; align-items: center">
+<span style="flex: none; height: 40px; padding: 0 12px; background: #00415E; color: #F7A700; display: flex; align-items: center; font: 400 18px 'Bebas Neue', sans-serif; letter-spacing: 0.06em; position: relative; z-index: 1">COACH</span>
+<div class="tick" style="display: flex; gap: 28px; white-space: nowrap; font: 400 20px 'Bebas Neue', sans-serif; letter-spacing: 0.04em; padding-left: 16px">
+<span>Situación → Tarea → Acción → Resultado ✦</span><span>Respira, tienes tiempo ✦</span><span>Habla de “yo”, no de “nosotros” ✦</span>
+<span>Situación → Tarea → Acción → Resultado ✦</span><span>Respira, tienes tiempo ✦</span><span>Habla de “yo”, no de “nosotros” ✦</span>
+</div>
+</div>
+</div>
+<a id="fin" class="fin" href="resumen.html" hidden>Terminar partido · ver resumen →</a>
+<script>
+(function(){
+  var b=document.getElementById('mic'),fin=document.getElementById('fin');
+  if(!b)return;
+  var rec=true;
+  b.addEventListener('click',function(){
+    rec=!rec;
+    b.style.background=rec?'#F7A700':'#FFFFFF';
+    b.setAttribute('aria-label',rec?'Terminar mi respuesta':'Empezar a responder');
+    b.querySelector('[data-on="rec"]').hidden=!rec;
+    b.querySelector('[data-on="paused"]').hidden=rec;
+    fin.hidden=rec;
+  });
+})();
+</script>
+</body>
+</html>
