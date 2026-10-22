@@ -11,7 +11,11 @@ module.exports = async function handler(req, res) {
     });
     if (r.status === 401 || r.status === 403) return res.status(503).json({ coach: 'llave_invalida' });
     if (r.status === 404) return res.status(503).json({ coach: 'modelo_no_disponible', modelo: MODEL });
-    if (!r.ok) return res.status(502).json({ coach: 'error_proveedor', status: r.status });
+    if (!r.ok) {
+      let detalle = '';
+      try { const j = await r.json(); detalle = j && j.error ? (j.error.type + ': ' + String(j.error.message || '').slice(0, 200)) : ''; } catch (e) {}
+      return res.status(502).json({ coach: 'error_proveedor', status: r.status, detalle: detalle });
+    }
     return res.status(200).json({ coach: 'ok', modelo: MODEL });
   } catch (e) {
     return res.status(502).json({ coach: 'sin_conexion' });
