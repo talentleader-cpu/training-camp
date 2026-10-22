@@ -2,13 +2,14 @@
 
 Plataforma gratuita para que estudiantes y profesionistas **armen su CV** y **entrenen sus entrevistas** con un coach de IA, en español o inglés. Cada entrevista se vive como un partido: los wexpancitos son los coaches.
 
-> **Estado: lanzamiento 1.** Funcionan el registro (se guarda en Supabase con consentimientos separados), El Vestidor (coach de CV con IA, CV formato Harvard, revisión ATS y descarga en PDF y Word) y la comunidad de WhatsApp. **La Cancha** (simulador de entrevistas) se muestra como demo marcada "Próximamente".
+> **Estado: lanzamiento 1.** Funcionan el registro (se guarda en Supabase con consentimientos separados), El Vestidor (coach de CV con IA, CV formato Harvard, revisión ATS y descarga en PDF y Word) y la comunidad de WhatsApp. **La Cancha** (`/cancha`): simulador de entrevistas solo por voz (10, 20 o 30 min) con 5 coaches y análisis post-partido. Las pantallas de `/web` y `/app` (previa, vivo, resumen, cromo) siguen como demos de diseño.
 
 ## Qué hay
 
 | Ruta | Qué es |
 |---|---|
 | `/` | Portada con scroll 3D en campo de golf: el wexpancito hace hoyo en uno y revela la ficha de registro con un cromo que se arma en vivo. El registro se guarda en Supabase. |
+| `/cancha` | **La Cancha** (funcional): la previa (CV del Vestidor, PDF o texto; vacante; coach; idioma; duración), la entrevista por voz en vivo y el resumen del partido con PDF descargable. |
 | `/cv` | **El Vestidor** (funcional): el coach guía por 7 etapas (objetivo, datos, estudios, experiencia, proyectos, habilidades, revisión) con checklist de lo que falta en cada una; CV Harvard en vivo en español, inglés o ambos; revisión ATS, match con la vacante y descarga PDF/Word. Responsive para web y app. |
 | `/aviso-de-privacidad` | Aviso de privacidad (completar razón social, domicilio y correo antes del lanzamiento). |
 | `/web/…` | Versión de escritorio. |
@@ -34,6 +35,7 @@ Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de
 - **Coach de CV:** `cv/index.html` + `js/vestidor.js` llaman a la función `api/cv-coach.js` (Vercel), que usa la API de Claude con salida estructurada. Las etapas y lo que necesita cada una viven en `js/etapas.js`, que comparten la página (barra y checklist) y el coach (sabe qué falta en la etapa actual). Reglas clave: nunca inventa datos, una pregunta a la vez, un puesto a la vez, busca resultados medibles, no pide datos sensibles.
 - **Idiomas del CV:** al empezar la persona elige español, inglés o ambos. Con *ambos* el coach arma el CV en español y `api/cv-traducir.js` genera la versión en inglés con los mismos datos; se puede ver y descargar cada versión. Cambiar de ES a EN a mitad del camino traduce el CV sin perder nada.
 - **Revisión ATS:** se calcula en el navegador con reglas fijas (contacto, educación, experiencia, verbos de acción, resultados medibles, habilidades), así el puntaje es explicable y siempre igual para el mismo CV.
+- **La Cancha:** `js/cancha.js` usa el reconocimiento de voz y la voz del navegador (Chrome, Edge, Safari). `api/cancha-turno.js` es el entrevistador (sabe el tiempo restante y cierra al acabarse); `api/cancha-evaluar.js` es un evaluador independiente con anclas conductuales (BARS) que solo cita lo que dijo la persona; `api/cv-leer.js` convierte un CV en PDF al formato del Vestidor. Al terminar se guarda la transcripción (nunca el audio) en `tc_entrevistas`.
 - **Descargas:** PDF con texto seleccionable (jsPDF) y Word (.docx) generados en el navegador; librerías en `vendor/`. Cada descarga guarda una versión del CV en `tc_cvs`.
 
 ### Variables de entorno (Vercel)
@@ -68,7 +70,7 @@ Colores y tipografías del brandbook de Wexpand 2025: azul `#0653A1`, naranja `#
 
 ## Siguientes pasos
 
-1. La Cancha: coach de entrevista **solo por voz** (sin modo texto), duración a elegir de 10, 20 o 30 minutos (máximo 30), + evaluador separado con rúbricas BARS.
+1. La Cancha: voz más natural (proveedor de voz en tiempo real) y avatar animado; hoy usa la voz y el reconocimiento del navegador.
 2. Cuentas de usuario (iniciar sesión, ver mis CVs en otro dispositivo, borrar cuenta).
 3. Panel interno para el equipo (registros, CVs, métricas) y conexión con WeAI usando solo datos con consentimiento.
 4. Apps nativas para Play Store y App Store (Capacitor).
