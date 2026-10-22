@@ -60,13 +60,36 @@ main{flex:1;width:100%;max-width:1360px;margin:0 auto;display:flex;flex-wrap:wra
 .coach .av img{width:46px;height:auto}
 .coach h1{margin:0;font:400 28px/1 var(--display)}
 .coach p{margin:2px 0 0;font:600 12px var(--body);color:var(--ink-soft)}
-.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:14px 18px 0}
-.steps li{list-style:none;display:flex;flex-direction:column;gap:5px;font:700 9.5px var(--body);letter-spacing:.05em;color:var(--ink-soft)}
-.steps li i{height:6px;border-radius:3px;background:var(--line)}
-.steps li.done i{background:var(--gold)}.steps li.done{color:var(--ink)}
-.steps li.now i{background:linear-gradient(90deg,var(--gold) 50%,var(--line) 50%)}.steps li.now{color:var(--ink)}
-.steps ol{display:contents}
-details.vac{margin:12px 18px 0;border:2px dashed var(--sky);border-radius:16px;padding:10px 14px}
+.langwrap{display:flex;align-items:center;gap:8px}
+.langlbl{font:700 11px var(--body);letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+.lang button[data-lang="ambos"]{min-width:62px}
+.stage{padding:14px 18px 0}
+.steps{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;margin:0;padding:0}
+.steps li{list-style:none}
+.steps button{width:100%;min-height:30px;border:0;background:none;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font:700 10px var(--body);color:var(--ink-soft)}
+.steps button:disabled{cursor:default}
+.steps i{display:block;width:100%;height:7px;border-radius:4px;background:var(--line)}
+.steps .done i{background:var(--gold)}
+.steps .skip i{background:repeating-linear-gradient(90deg,var(--orange) 0 6px,var(--line) 6px 10px)}
+.steps .now i{background:var(--blue);box-shadow:0 0 0 2px var(--sky)}
+.steps .now,.steps .done{color:var(--ink)}
+.steps .lbl{display:none}
+.stagecard{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--paper)}
+.sc-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 10px}
+.sc-h b{font:400 20px/1 var(--display);letter-spacing:.03em;color:var(--deep)}
+.sc-h small{font:600 11px var(--body);color:var(--ink-soft)}
+.chk{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chk span{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:999px;font:600 11.5px var(--body);background:var(--white);color:var(--ink-soft);border:1.5px solid var(--line)}
+.chk span.ok{background:var(--deep);border-color:var(--deep);color:var(--white)}
+.chk span.opt{border-style:dashed}
+.ver{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.ver button{height:36px;padding:0 14px;border-radius:999px;border:2px solid var(--deep);background:var(--white);color:var(--deep);font:700 12.5px var(--body);cursor:pointer}
+.ver button[aria-pressed="true"]{background:var(--deep);color:var(--white)}
+.ver small{font:600 12px var(--body);color:var(--ink-soft)}
+.sheet.loading{opacity:.45;pointer-events:none}
+.dlnote{grid-column:1/-1;margin:0}
+@media (min-width: 1180px){ .steps .lbl{display:block;font-size:9px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%} }
+details.vac{margin:10px 18px 0;border:2px dashed var(--sky);border-radius:16px;padding:10px 14px}
 details.vac summary{cursor:pointer;font:700 13px var(--body);list-style:none;display:flex;justify-content:space-between;gap:8px}
 details.vac summary::-webkit-details-marker{display:none}
 details.vac summary small{font-weight:600;color:var(--ink-soft)}
@@ -141,7 +164,7 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
   .tabs{display:flex}
   .atspill{display:none}
   main{padding-top:12px}
-  .chat{position:relative;top:0;height:calc(100svh - 190px);min-height:480px}
+  .chat{position:relative;top:0;height:calc(100svh - 190px);min-height:560px}
   main[data-tab="chat"] .side{display:none}
   main[data-tab="cv"] .chat{display:none}
 }
@@ -149,7 +172,9 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
   .brand{display:none}
   .atspill span{display:none}
   .dl{grid-template-columns:1fr}
-  .steps li{font-size:8.5px}
+  .langlbl{display:none}
+  .stagecard{padding:8px 10px}
+  .sc-h b{font-size:18px}
 }
 @media (prefers-reduced-motion: reduce){*{animation:none!important;scroll-behavior:auto!important}}
 </style>
@@ -161,10 +186,12 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
     <span class="brand">wexpand</span>
     <span class="tag">EL VESTIDOR</span>
     <span class="grow"></span>
+    <div class="langwrap"><span class="langlbl">CV en</span>
     <div class="lang" role="group" aria-label="Idioma del CV">
-      <button type="button" data-lang="es" aria-pressed="true">ES</button>
-      <button type="button" data-lang="en" aria-pressed="false">EN</button>
-    </div>
+      <button type="button" data-lang="es" aria-pressed="true" title="Español">ES</button>
+      <button type="button" data-lang="en" aria-pressed="false" title="Inglés">EN</button>
+      <button type="button" data-lang="ambos" aria-pressed="false" title="Español e inglés">ES+EN</button>
+    </div></div>
     <div class="atspill" aria-live="polite"><b id="atsTop">0</b><span>LISTO PARA<br>ATS</span></div>
   </div>
 </header>
@@ -180,13 +207,13 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
       <span class="av"><img src="/assets/wx-voleibol.png" alt=""></span>
       <div><h1>Coach armador</h1><p>Te pregunto, tú me cuentas, yo lo escribo. Nunca invento datos.</p></div>
     </div>
-    <ol class="steps" id="steps" aria-label="Avance del CV">
-      <li data-s="datos"><i></i>DATOS</li>
-      <li data-s="educacion"><i></i>ESTUDIOS</li>
-      <li data-s="experiencia"><i></i>EXPERIENCIA</li>
-      <li data-s="proyectos"><i></i>PROYECTOS</li>
-      <li data-s="habilidades"><i></i>HABILIDADES</li>
-    </ol>
+    <div class="stage">
+      <ol class="steps" id="steps" aria-label="Etapas del CV"></ol>
+      <div class="stagecard" id="stageCard" aria-live="polite">
+        <div class="sc-h"><b id="stName">ETAPA 1 DE 7 · OBJETIVO</b><small id="stHint"></small></div>
+        <div class="chk" id="stList"></div>
+      </div>
+    </div>
     <details class="vac" id="vacBox">
       <summary><span>Vacante objetivo <small>(opcional)</small></span><small id="vacState">Agregar</small></summary>
       <label for="vacante" class="hint">Pega la descripción del puesto y tu coach priorizará sus palabras clave.</label>
@@ -205,6 +232,11 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
   <aside class="side" aria-label="Tu CV">
     <section class="panel">
       <div class="panel-h"><h2>Tu CV en vivo</h2><small>Formato Harvard · se actualiza mientras platicas</small></div>
+      <div class="ver" id="verBox" role="group" aria-label="Versión del CV" hidden>
+        <button type="button" data-ver="es" aria-pressed="true">Español</button>
+        <button type="button" data-ver="en" aria-pressed="false">English</button>
+        <small id="verState"></small>
+      </div>
       <article class="sheet" id="sheet" aria-label="Vista previa del CV"></article>
     </section>
 
@@ -222,6 +254,7 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
       <div class="dl">
         <button type="button" class="btn pri" id="dlPdf">Descargar PDF</button>
         <button type="button" class="btn sec" id="dlDocx">Descargar Word</button>
+        <p class="fine dlnote" id="dlNote" hidden></p>
       </div>
       <div class="meta"><span>Gratis · sin marcas de agua</span><button type="button" class="linkbtn" id="reset">Empezar un CV nuevo</button></div>
       <a class="next" id="nextCancha" href="/web/hub.html">
@@ -239,6 +272,7 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="/js/tc.js"></script>
+<script src="/js/etapas.js"></script>
 <script src="/vendor/jspdf.umd.min.js" defer></script>
 <script src="/vendor/docx.iife.js" defer></script>
 <script src="/js/vestidor.js" defer></script>

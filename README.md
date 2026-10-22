@@ -9,7 +9,7 @@ Plataforma gratuita para que estudiantes y profesionistas **armen su CV** y **en
 | Ruta | Qué es |
 |---|---|
 | `/` | Portada con scroll 3D en campo de golf: el wexpancito hace hoyo en uno y revela la ficha de registro con un cromo que se arma en vivo. El registro se guarda en Supabase. |
-| `/cv` | **El Vestidor** (funcional): chat con el coach armador, CV Harvard en vivo, revisión ATS, match con la vacante, descarga PDF/Word. Responsive para web y app. |
+| `/cv` | **El Vestidor** (funcional): el coach guía por 7 etapas (objetivo, datos, estudios, experiencia, proyectos, habilidades, revisión) con checklist de lo que falta en cada una; CV Harvard en vivo en español, inglés o ambos; revisión ATS, match con la vacante y descarga PDF/Word. Responsive para web y app. |
 | `/aviso-de-privacidad` | Aviso de privacidad (completar razón social, domicilio y correo antes del lanzamiento). |
 | `/web/…` | Versión de escritorio. |
 | `/app/…` | Versión móvil. Se puede instalar en el teléfono ("Agregar a pantalla de inicio"). |
@@ -31,7 +31,8 @@ Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de
 ## Cómo funciona
 
 - **Registro:** `index.html` → `js/tc.js` inserta en `tc_jugadores` (Supabase, proyecto *Recruitment Dashboard*) con la llave pública. Las tablas `tc_jugadores` y `tc_cvs` solo permiten **insertar**; leer los datos requiere la llave de servicio (equipo Wexpand, desde el panel de Supabase).
-- **Coach de CV:** `cv/index.html` + `js/vestidor.js` llaman a la función `api/cv-coach.js` (Vercel), que usa la API de Claude con salida estructurada. Reglas clave del coach: nunca inventa datos, una pregunta a la vez, busca resultados medibles, no pide datos sensibles.
+- **Coach de CV:** `cv/index.html` + `js/vestidor.js` llaman a la función `api/cv-coach.js` (Vercel), que usa la API de Claude con salida estructurada. Las etapas y lo que necesita cada una viven en `js/etapas.js`, que comparten la página (barra y checklist) y el coach (sabe qué falta en la etapa actual). Reglas clave: nunca inventa datos, una pregunta a la vez, un puesto a la vez, busca resultados medibles, no pide datos sensibles.
+- **Idiomas del CV:** al empezar la persona elige español, inglés o ambos. Con *ambos* el coach arma el CV en español y `api/cv-traducir.js` genera la versión en inglés con los mismos datos; se puede ver y descargar cada versión. Cambiar de ES a EN a mitad del camino traduce el CV sin perder nada.
 - **Revisión ATS:** se calcula en el navegador con reglas fijas (contacto, educación, experiencia, verbos de acción, resultados medibles, habilidades), así el puntaje es explicable y siempre igual para el mismo CV.
 - **Descargas:** PDF con texto seleccionable (jsPDF) y Word (.docx) generados en el navegador; librerías en `vendor/`. Cada descarga guarda una versión del CV en `tc_cvs`.
 
