@@ -159,12 +159,25 @@
   /* ---------- voz (dictado del navegador) ---------- */
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition, rec = null, base = '';
   if (SR) {
-    $('mic').hidden = false;
+    $('mic').hidden = false; $('micLang').hidden = false;
     $('mic').onclick = function () { if (rec) { stopMic(); return; } startMic(); };
+    // idioma del dictado: el navegador escucha un idioma a la vez, la persona elige ES o EN
+    if (S.micLang !== 'en' && S.micLang !== 'es') S.micLang = /^en/i.test(navigator.language || '') ? 'en' : 'es';
+    var renderMicLang = function () {
+      var en = S.micLang === 'en';
+      $('micLang').innerHTML = (en ? 'EN' : 'ES') + '<small>dictado</small>';
+      $('micLang').setAttribute('aria-label', 'Idioma del dictado: ' + (en ? 'inglés' : 'español') + '. Toca para cambiar a ' + (en ? 'español' : 'inglés'));
+    };
+    renderMicLang();
+    $('micLang').onclick = function () {
+      S.micLang = S.micLang === 'en' ? 'es' : 'en'; save(); renderMicLang();
+      toast(S.micLang === 'en' ? 'Dictado en inglés' : 'Dictado en español');
+      if (rec) { stopMic(); setTimeout(startMic, 300); } // si ya estaba escuchando, sigue en el nuevo idioma
+    };
   }
   function startMic() {
     try {
-      rec = new SR(); rec.lang = /^en/i.test(navigator.language || '') ? 'en-US' : 'es-MX'; rec.interimResults = true; rec.continuous = true;
+      rec = new SR(); rec.lang = S.micLang === 'en' ? 'en-US' : 'es-MX'; rec.interimResults = true; rec.continuous = true;
       base = $('msg').value ? $('msg').value.trim() + ' ' : '';
       rec.onresult = function (ev) { var t = ''; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript; $('msg').value = base + t; autosize(); };
       rec.onend = function () { rec = null; $('mic').setAttribute('aria-pressed', 'false'); };

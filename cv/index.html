@@ -116,6 +116,8 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
 @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(240,126,46,.5)}50%{box-shadow:0 0 0 8px rgba(240,126,46,0)}}
 .ib.send{background:var(--gold);color:var(--deep);box-shadow:0 4px 0 var(--deep)}
 .ib:disabled{opacity:.5;cursor:default}
+.miclang{flex:none;height:52px;min-width:46px;padding:0 8px;border-radius:16px;border:2px solid var(--line);background:var(--white);color:var(--deep);font:800 12px var(--body);letter-spacing:.04em;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+.miclang small{font:600 8.5px var(--body);letter-spacing:0;color:var(--ink-soft)}
 
 /* CV */
 .side{flex:1.15 1 520px;min-width:0;display:flex;flex-direction:column;gap:18px}
@@ -224,6 +226,7 @@ details.vac .hint{margin:6px 0 0;font:500 12px var(--body);color:var(--ink-soft)
     <form class="compose" id="compose">
       <label for="msg">Tu respuesta</label>
       <textarea id="msg" rows="1" placeholder="Escribe o usa el micrófono…" autocomplete="off"></textarea>
+      <button type="button" class="miclang" id="micLang" aria-label="Idioma del dictado: español. Toca para cambiar a inglés" title="Idioma en el que dictas" hidden>ES</button>
       <button type="button" class="ib mic" id="mic" aria-pressed="false" aria-label="Dictar por voz" hidden><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11 a7 7 0 0 0 14 0"></path><path d="M12 18 V21"></path></svg></button>
       <button type="submit" class="ib send" id="send" aria-label="Enviar"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12 H19"></path><path d="M13 6 L19 12 L13 18"></path></svg></button>
     </form>
