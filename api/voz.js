@@ -40,6 +40,18 @@ function mismoSitio(req) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   const prov = proveedor();
+  const tok = process.env.TC_TEST_TOKEN;
+  if (req.method === 'GET' && tok && req.query && req.query.prueba === tok && prov) { // prueba interna: genera audio en ambos idiomas
+    const out = {};
+    for (const idioma of ['en', 'es']) {
+      const r = await fetch('https://' + (req.headers['x-forwarded-host'] || req.headers.host) + '/api/voz', {
+        method: 'POST', headers: { 'content-type': 'application/json', origin: 'https://' + (req.headers['x-forwarded-host'] || req.headers.host) },
+        body: JSON.stringify({ texto: idioma === 'en' ? 'Hi! Thanks for coming in today. Tell me about yourself.' : 'Hola, gracias por venir. Cuéntame de ti.', idioma })
+      });
+      out[idioma] = { status: r.status, tipo: r.headers.get('content-type'), bytes: (await r.arrayBuffer()).byteLength };
+    }
+    return res.status(200).json({ voz: prov, prueba: out });
+  }
   if (req.method === 'GET') return res.status(200).json({ voz: prov || 'navegador' });
   if (req.method !== 'POST') return res.status(405).json({ error: 'Usa POST.' });
   if (!prov) return res.status(501).json({ error: 'sin_voz' });
