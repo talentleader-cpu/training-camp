@@ -40,6 +40,7 @@ Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de
 | Variable | Para qué |
 |---|---|
 | `ANTHROPIC_API_KEY` | **Obligatoria.** Llave de la API de Claude para el coach. Sin ella el chat responde "El coach todavía no está conectado". |
+| `ANTHROPIC_WORKSPACE_ID` | Solo si la llave no pertenece a un workspace de Anthropic: ID del workspace (empieza con `wrkspc_`). |
 | `TC_MODEL` | Opcional. Modelo a usar (por defecto `claude-sonnet-5-5`). |
 
 ### Ver los registros

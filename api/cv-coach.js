@@ -146,11 +146,11 @@ module.exports = async function handler(req, res) {
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      headers: {
+      headers: Object.assign({
         'content-type': 'application/json',
         'x-api-key': key,
         'anthropic-version': '2023-06-01'
-      },
+      }, process.env.ANTHROPIC_WORKSPACE_ID ? { 'anthropic-workspace-id': process.env.ANTHROPIC_WORKSPACE_ID } : {}),
       body: JSON.stringify({
         model: MODEL,
         max_tokens: 4000,
