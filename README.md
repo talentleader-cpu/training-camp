@@ -19,7 +19,7 @@ Pantallas (mismo nombre en `/web` y `/app`):
 | Página | Módulo | Contenido |
 |---|---|---|
 | `hub` | — | ¿Qué entrenas hoy? Elegir entre armar CV o simular entrevista. |
-| `previa` | La Cancha (demo) | Subir CV, pegar la vacante, elegir coach, idioma, duración y modo. |
+| `previa` | La Cancha (demo) | Subir CV, pegar la vacante, elegir coach, idioma y duración (10, 20 o 30 min). La entrevista es solo por voz. |
 | `vivo` | La Cancha (demo) | La entrevista como transmisión en vivo: marcador, stats en tiempo real, checklist STAR. |
 | `resumen` | La Cancha (demo) | Resumen del partido: momentum, revisión VAR, stats por competencia, plan de entrenamiento. |
 | `cromo` | — (demo) | Cromo coleccionable, ADN de jugador, álbum de coaches e historial. |
@@ -68,7 +68,7 @@ Colores y tipografías del brandbook de Wexpand 2025: azul `#0653A1`, naranja `#
 
 ## Siguientes pasos
 
-1. La Cancha: coach de entrevista con voz en tiempo real + evaluador separado con rúbricas BARS.
+1. La Cancha: coach de entrevista **solo por voz** (sin modo texto), duración a elegir de 10, 20 o 30 minutos (máximo 30), + evaluador separado con rúbricas BARS.
 2. Cuentas de usuario (iniciar sesión, ver mis CVs en otro dispositivo, borrar cuenta).
 3. Panel interno para el equipo (registros, CVs, métricas) y conexión con WeAI usando solo datos con consentimiento.
 4. Apps nativas para Play Store y App Store (Capacitor).

@@ -2,37 +2,15 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
-    {
-      "source": "/web",
-      "destination": "/web/hub"
-    },
-    {
-      "source": "/app",
-      "destination": "/app/hub"
-    },
-    {
-      "source": "/web/cv-vestidor",
-      "destination": "/cv/"
-    },
-    {
-      "source": "/web/cv-resultado",
-      "destination": "/cv/"
-    },
-    {
-      "source": "/app/cv-vestidor",
-      "destination": "/cv/"
-    },
-    {
-      "source": "/app/cv-resultado",
-      "destination": "/cv/"
-    }
+    { "source": "/web", "destination": "/web/hub" },
+    { "source": "/app", "destination": "/app/hub" },
+    { "source": "/web/cv-vestidor", "destination": "/cv/" },
+    { "source": "/web/cv-resultado", "destination": "/cv/" },
+    { "source": "/app/cv-vestidor", "destination": "/cv/" },
+    { "source": "/app/cv-resultado", "destination": "/cv/" }
   ],
   "functions": {
-    "api/cv-coach.js": {
-      "maxDuration": 60
-    },
-    "api/cv-traducir.js": {
-      "maxDuration": 60
-    }
+    "api/cv-coach.js": { "maxDuration": 60 },
+    "api/cv-traducir.js": { "maxDuration": 60 }
   }
 }

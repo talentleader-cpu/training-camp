@@ -35,7 +35,7 @@ button,input,select{font:inherit}
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));pointer-events:none}
 .bar > *{pointer-events:auto}
 .brand{display:flex;align-items:center;gap:8px}
-.brand b{font:800 20px var(--body);letter-spacing:-.02em}
+.brand .logo{display:block;height:34px;width:auto}
 .pill{padding:4px 10px;border-radius:999px;background:var(--orange);font:400 16px var(--display);letter-spacing:.06em;color:var(--white)}
 .score{display:flex;align-items:stretch;border-radius:10px;overflow:hidden;box-shadow:0 4px 0 rgba(0,0,0,.35);font-family:var(--display);letter-spacing:.04em}
 .score span{display:flex;align-items:center;padding:4px 10px;font-size:20px;white-space:nowrap}
@@ -167,7 +167,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   .score span{padding:4px 8px;font-size:18px}
   .score .n{min-width:0;font-size:19px}
   .skip{padding:0 10px;font-size:12px;height:36px}
-  .brand b{font-size:17px}
+  .brand .logo{height:28px}
   .btn{font-size:24px;padding:0 22px;height:58px}
   .brand .pill{display:none}
   .seg.c6{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -189,7 +189,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 
 
 <header class="bar">
-  <div class="brand"><b>wexpand</b><span class="pill">TRAINING CAMP</span></div>
+  <div class="brand"><img class="logo" src="/assets/wexpand-logo-blanco.png" alt="Wexpand"><span class="pill">TRAINING CAMP</span></div>
   <div class="score" aria-label="Marcador"><span class="t1">HOYO 1</span><span class="n" id="score">PAR 3</span><span class="t2">GOLPES <b id="strokes" style="font-weight:400;margin-left:6px">0</b></span></div>
   <a class="skip" href="#ficha">Ir a mi ficha</a>
 </header>
