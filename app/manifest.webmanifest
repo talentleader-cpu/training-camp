@@ -4,7 +4,7 @@
   "description": "Arma tu CV y entrena tus entrevistas con un coach de IA.",
   "lang": "es-MX",
   "start_url": "/app/hub.html",
-  "scope": "/app/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#00415E",
   "theme_color": "#0653A1",

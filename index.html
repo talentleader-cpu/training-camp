@@ -326,7 +326,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
         </div>
       </fieldset>
       <div class="consent">
-        <label><input id="c1" type="checkbox"><span>Acepto el <a href="#aviso">aviso de privacidad</a>. <strong>(obligatorio)</strong></span></label>
+        <label><input id="c1" type="checkbox"><span>Acepto el <a href="/aviso-de-privacidad" target="_blank" rel="noopener">aviso de privacidad</a>. <strong>(obligatorio)</strong></span></label>
         <label><input id="c2" type="checkbox"><span>Quiero que Wexpand me contacte sobre vacantes y la comunidad. (opcional)</span></label>
         <label><input id="c3" type="checkbox"><span>Acepto que mis entrevistas, de forma anónima, se usen para mejorar la IA. (opcional)</span></label>
       </div>
@@ -346,6 +346,7 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 </section>
 </main>
 
+<script src="/js/tc.js"></script>
 <script>
 (function(){
   const $=id=>document.getElementById(id);
@@ -467,20 +468,37 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   }
   group('liga','liga');group('eng','eng');upd();
 
+  const btnSubmit=document.querySelector('#form button[type=submit]');
   $('form').addEventListener('submit',e=>{
     e.preventDefault();
     const err=$('err'),miss=[];
-    if(!nombre.value.trim())miss.push('tu nombre');
+    if(nombre.value.trim().length<2)miss.push('tu nombre');
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('correo').value.trim()))miss.push('un correo válido');
     if(!$('c1').checked)miss.push('aceptar el aviso de privacidad');
     if(miss.length){err.textContent=`Para sellar tu fichaje falta ${miss.join(', ')}.`;err.hidden=false;return}
-    err.hidden=true;$('form').hidden=true;$('done').hidden=false;
-    if(!reduce){const st=$('stage').getBoundingClientRect();if(st.bottom>0)burst()}
-    $('done').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
+    err.hidden=true;btnSubmit.disabled=true;btnSubmit.textContent='Sellando…';
+    const posTxt=pos.value?pos.options[pos.selectedIndex].text:'';
+    TC.registrar({nombre:nombre.value.trim(),correo:$('correo').value.trim(),celular:$('cel').value.trim(),carrera:posTxt,
+      estado:estado.value,ciudad:ciudad.value.trim(),liga:state.liga,ingles:state.eng,
+      acepta_contacto:$('c2').checked,acepta_uso_ia:$('c3').checked,origen:window.innerWidth<768?'portada-movil':'portada-web'})
+    .then(()=>{
+      $('form').hidden=true;$('done').hidden=false;
+      if(!reduce){const st=$('stage').getBoundingClientRect();if(st.bottom>0)burst()}
+      $('done').scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});
+    })
+    .catch(()=>{
+      err.textContent='No pudimos guardar tu ficha. Revisa tu conexión e intenta de nuevo.';err.hidden=false;
+      btnSubmit.disabled=false;btnSubmit.textContent='Sellar mi fichaje';
+    });
   });
+  // jugador que ya tiene ficha
+  const yo=TC.jugador();
+  if(yo&&yo.nombre){
+    const sk=document.querySelector('.skip');
+    sk.textContent='Entrar al camp';sk.href=window.innerWidth<768?'/app/hub.html':'/web/hub.html';
+    nombre.value=yo.nombre;upd();
+  }
 })();
-  var go=document.getElementById('goHub');
-  if(go&&window.innerWidth<768){go.href='/app/hub.html'}
 </script>
 
 </body>
