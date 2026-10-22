@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La Cancha · Training Camp</title>
+<meta name="description" content="Simula tu entrevista por voz con un coach de IA y recibe tu análisis del partido. Gratis.">
+<meta name="theme-color" content="#00415E">
+<link rel="icon" type="image/png" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" href="/assets/icon-192.png">
+<link rel="manifest" href="/app/manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Training Camp">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;0,800;1,600;1,700&display=swap">
+<style>
+:root{
+  --blue:#0653A1; --deep:#00415E; --night:#00273F; --sky:#96D4E7; --cyan:#00A0C1;
+  --orange:#F07E2E; --gold:#F7A700; --paper:#F4FAFD; --mist:#E1EFF5; --line:#CFE6EF;
+  --ink:#00415E; --ink-soft:#355E72; --warn:#B4531A; --white:#FFFFFF;
+  --display:'Bebas Neue','Oswald','Arial Narrow',sans-serif;
+  --body:'Montserrat','Helvetica Neue',Arial,sans-serif;
+  color-scheme: light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body)}
+body{min-height:100vh;min-height:100svh;display:flex;flex-direction:column}
+body.dark{background:var(--deep);color:var(--white)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+a{color:inherit}
+.disp{font-family:var(--display);font-weight:400;letter-spacing:.03em}
+
+/* barra superior */
+.top{background:var(--deep);color:var(--white);padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px))}
+.top-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.back{width:44px;height:44px;flex:none;border-radius:12px;background:rgba(255,255,255,.12);color:var(--white);display:flex;align-items:center;justify-content:center;text-decoration:none}
+.logo{display:block;height:32px;width:auto}
+.tag{padding:4px 10px;border-radius:8px;background:var(--orange);color:var(--white);font:400 18px var(--display);letter-spacing:.08em}
+.grow{flex:1}
+.wrap{width:100%;max-width:1360px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+
+/* ---------- LA PREVIA ---------- */
+.hero{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin:8px 0 22px}
+.hero h1{margin:0;font:400 clamp(52px,8vw,96px)/.9 var(--display)}
+.hero h1 span{color:var(--orange)}
+.hero p{margin:10px 0 0;max-width:560px;font:600 15px/1.5 var(--body);color:var(--ink-soft)}
+.voz{display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;background:var(--deep);color:var(--white);font:700 13px var(--body)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:20px}
+.card{background:var(--white);border-radius:26px;box-shadow:0 6px 0 var(--line);padding:22px;display:flex;flex-direction:column;gap:14px}
+.card h2{margin:0;font:400 32px/1 var(--display)}
+.card h2 b{color:var(--orange);font-weight:400;margin-right:6px}
+.hint{margin:0;font:500 13px/1.45 var(--body);color:var(--ink-soft)}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--mist);border-radius:999px;padding:4px;gap:4px}
+.seg button{min-height:40px;border:0;border-radius:999px;background:transparent;color:var(--ink);font:700 13px var(--body);cursor:pointer;padding:0 10px}
+.seg button[aria-pressed="true"]{background:var(--deep);color:var(--white)}
+.seg button:disabled{opacity:.45;cursor:not-allowed}
+textarea.in{width:100%;min-height:130px;border-radius:16px;border:2px solid var(--line);padding:12px 14px;font:500 14px/1.5 var(--body);resize:vertical;background:var(--white)}
+.cvbox{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--paper);border:2px solid var(--line)}
+.cvbox .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--orange);color:var(--white);display:flex;align-items:center;justify-content:center;font:400 18px var(--display)}
+.cvbox b{display:block;font:700 14px var(--body)}
+.cvbox small{display:block;font:600 12px var(--body);color:var(--ink-soft)}
+.cvbox.ok{border-color:var(--cyan);background:#EAF8FC}
+.file{position:relative;overflow:hidden}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.coaches{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.coaches button{border:3px solid var(--line);background:var(--white);border-radius:18px;padding:8px 4px 10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font:400 17px var(--display);letter-spacing:.03em;color:var(--ink)}
+.coaches img{width:100%;max-width:74px;aspect-ratio:1;object-fit:contain}
+.coaches button[aria-pressed="true"]{border-color:var(--orange);background:var(--blue);color:var(--white)}
+.coachtxt{margin:0;font:italic 600 13px/1.45 var(--body);color:var(--ink-soft)}
+.rules{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+.rules>span{font:700 12px var(--body);letter-spacing:.08em}
+.go{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:58px;padding:0 28px;border-radius:999px;border:0;font:400 26px var(--display);letter-spacing:.04em;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn.big{min-height:72px;padding:0 44px;font-size:34px;background:var(--orange);color:var(--white);box-shadow:0 6px 0 var(--deep)}
+.btn.sec{background:var(--white);color:var(--deep);border:3px solid var(--deep)}
+.btn.ghost{background:transparent;color:var(--white);border:2px solid var(--sky);min-height:50px;font-size:22px}
+.btn:disabled{opacity:.55;cursor:default}
+.fine{font:600 12px/1.5 var(--body);color:var(--ink-soft);text-align:center;max-width:620px}
+.alert{padding:14px 16px;border-radius:16px;background:#FFF1E6;color:var(--warn);font:700 14px/1.45 var(--body)}
+
+/* ---------- EN VIVO ---------- */
+.live{display:flex;flex-wrap:wrap;gap:20px}
+.field{position:relative;flex:999 1 640px;min-width:0;min-height:560px;border-radius:28px;background:var(--blue);overflow:hidden;display:flex;flex-direction:column}
+.field svg.lines{position:absolute;inset:0;width:100%;height:100%;opacity:.2;pointer-events:none}
+.ghostword{position:absolute;left:16px;bottom:170px;font:400 clamp(120px,18vw,240px)/.8 var(--display);color:transparent;-webkit-text-stroke:2px rgba(150,212,231,.28);white-space:nowrap;pointer-events:none}
+.board{position:relative;z-index:1;margin:20px 20px 0;align-self:flex-start;display:flex;flex-wrap:wrap;border-radius:12px;overflow:hidden;box-shadow:0 4px 0 rgba(0,25,40,.35)}
+.board>span{display:flex;align-items:center;padding:6px 12px;font:400 22px var(--display);letter-spacing:.04em}
+.board .b1{background:var(--white);padding:0 10px}
+.board .b1 img{height:20px;display:block}
+.board .b2{background:var(--deep);font-variant-numeric:tabular-nums;min-width:96px;justify-content:center}
+.board .b2.low{color:var(--gold)}
+.board .b3{background:var(--blue);border-left:2px solid #2A72BD;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;line-height:1.5}
+.board .b4{background:var(--orange);gap:6px}
+.board .dot{width:9px;height:9px;border-radius:50%;background:var(--white);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.mascot{position:relative;z-index:1;flex:1;display:flex;align-items:center;justify-content:center;min-height:200px;padding:10px}
+.mascot img{width:min(300px,62%);height:auto;filter:drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff) drop-shadow(8px 10px 0 rgba(0,25,40,.35));transition:transform .2s}
+.mascot.talk img{animation:talk .5s ease-in-out infinite alternate}
+.mascot.listen img{animation:bob 2.4s ease-in-out infinite}
+@keyframes talk{from{transform:translateY(0) rotate(-1.5deg)}to{transform:translateY(-8px) rotate(1.5deg)}}
+@keyframes bob{50%{transform:translateY(-6px)}}
+.qcard{position:relative;z-index:1;margin:0 20px 20px}
+.qtags{display:inline-flex;flex-wrap:wrap;border-radius:10px 10px 0 0;overflow:hidden}
+.qtags span{padding:7px 12px;font:400 20px var(--display);letter-spacing:.06em}
+.qtags .t1{background:var(--orange)}
+.qtags .t2{background:var(--gold);color:var(--deep)}
+.qtext{background:var(--white);color:var(--deep);padding:16px 20px;border-radius:0 14px 0 0;box-shadow:0 6px 0 rgba(0,25,40,.35)}
+.qtext p{margin:0;font:400 clamp(26px,3.2vw,40px)/1.02 var(--display);letter-spacing:.01em}
+.qstate{display:flex;align-items:center;gap:10px;background:var(--cyan);padding:10px 20px;border-radius:0 0 14px 14px;font:700 14px/1.35 var(--body)}
+.qstate i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--white)}
+.qstate.listen i{background:#FF4D4D;animation:blink 1s infinite}
+.side{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:16px}
+.panel{border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.panel.stats{background:var(--blue);border:2px solid var(--sky)}
+.panel.narr{flex:1;background:rgba(6,83,161,.45);min-height:220px;max-height:440px;overflow:hidden}
+.panel h3{margin:0;font:400 22px var(--display);letter-spacing:.08em;color:var(--sky)}
+.star{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.star span{padding:7px 0;border-radius:8px;text-align:center;font:400 17px var(--display);letter-spacing:.04em;border:2px dashed rgba(150,212,231,.5);color:var(--sky)}
+.star span.on{background:var(--gold);border:2px solid var(--gold);color:var(--deep)}
+.tip{margin:0;font:italic 700 13px/1.4 var(--body);color:var(--gold);min-height:18px}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpis div{background:var(--deep);border-radius:12px;padding:8px 6px;text-align:center}
+.kpis b{display:block;font:400 28px/1 var(--display);color:var(--gold);font-variant-numeric:tabular-nums}
+.kpis small{display:block;font:700 9.5px var(--body);letter-spacing:.06em;color:var(--sky);margin-top:2px}
+.log{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+.log div{display:flex;flex-direction:column;gap:2px}
+.log b{font:400 15px var(--display);letter-spacing:.06em;color:var(--gold)}
+.log .j b{color:var(--sky)}
+.log span{font:500 13.5px/1.45 var(--body);color:#E8F4FA}
+.log .now span{color:var(--white);font-style:italic}
+.controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px;padding:20px 0 6px}
+.mic{width:96px;height:96px;border-radius:50%;border:0;background:var(--gold);color:var(--deep);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;box-shadow:0 0 0 7px rgba(247,167,0,.28),0 6px 0 rgba(0,25,40,.4);font:400 15px var(--display);letter-spacing:.05em}
+.mic.rec{background:#FF5A4D;color:var(--white);box-shadow:0 0 0 7px rgba(255,90,77,.3),0 6px 0 rgba(0,25,40,.4);animation:pulse 1.3s infinite}
+.mic:disabled{opacity:.55;cursor:default;animation:none}
+@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(255,90,77,.12),0 6px 0 rgba(0,25,40,.4)}}
+.eq{display:flex;align-items:flex-end;gap:4px;height:26px}
+.eq i{width:5px;border-radius:3px;background:currentColor;animation:eq .9s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.15s}.eq i:nth-child(3){animation-delay:.3s}.eq i:nth-child(4){animation-delay:.45s}
+@keyframes eq{0%,100%{height:6px}50%{height:26px}}
+.ctlnote{width:100%;text-align:center;font:600 12.5px var(--body);color:var(--sky);margin:0}
+.ticker{height:44px;background:var(--gold);color:var(--deep);overflow:hidden;display:flex;align-items:center;margin-top:18px;border-radius:12px}
+.ticker>b{flex:none;height:44px;padding:0 14px;background:var(--night);color:var(--gold);display:flex;align-items:center;font:400 21px var(--display);letter-spacing:.06em;position:relative;z-index:1}
+.ticker div{display:flex;gap:34px;white-space:nowrap;font:400 22px var(--display);letter-spacing:.04em;padding-left:20px;animation:tick 38s linear infinite}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* ---------- ANÁLISIS ---------- */
+.loading{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center}
+.loading img{width:180px;animation:bob 1.6s ease-in-out infinite;filter:drop-shadow(4px 0 0 #fff) drop-shadow(-4px 0 0 #fff) drop-shadow(0 4px 0 #fff) drop-shadow(0 -4px 0 #fff)}
+.loading h2{margin:0;font:400 44px/1 var(--display)}
+.loading p{margin:0;font:600 14px var(--body);color:var(--sky)}
+.res-hero{display:flex;flex-wrap:wrap;gap:20px;align-items:stretch}
+.scorecard{flex:1 1 280px;background:var(--deep);color:var(--white);border-radius:28px;padding:22px 110px 22px 22px;display:flex;align-items:center;gap:18px;position:relative;overflow:hidden}
+.scorecard .n{font:400 120px/.8 var(--display);color:var(--gold);font-variant-numeric:tabular-nums}
+.scorecard .n small{font-size:40px;color:var(--sky)}
+.scorecard h2{margin:0 0 6px;font:400 34px/1 var(--display)}
+.scorecard p{margin:0;font:500 14px/1.5 var(--body);color:#E3F1F7}
+.scorecard img{position:absolute;right:-14px;bottom:-20px;width:120px;opacity:.95}
+.boxscore{flex:1 1 300px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.boxscore div{background:var(--white);border-radius:18px;box-shadow:0 4px 0 var(--line);padding:12px 14px}
+.boxscore b{display:block;font:400 36px/1 var(--display);color:var(--blue);font-variant-numeric:tabular-nums}
+.boxscore small{font:700 11px var(--body);letter-spacing:.06em;color:var(--ink-soft)}
+.sec-h{margin:30px 0 12px;font:400 36px/1 var(--display)}
+.sec-h span{color:var(--orange)}
+.comp{display:grid;gap:12px}
+.comp article{background:var(--white);border-radius:20px;box-shadow:0 4px 0 var(--line);padding:16px 18px;display:grid;gap:8px}
+.comp .h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.comp .h b{font:700 15px var(--body)}
+.comp .h span{font:400 26px var(--display);color:var(--blue)}
+.bar{height:10px;border-radius:5px;background:var(--mist);overflow:hidden}
+.bar i{display:block;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--orange),var(--gold))}
+.comp q{font:italic 600 13px/1.45 var(--body);color:var(--ink-soft)}
+.comp p{margin:0;font:500 13.5px/1.5 var(--body)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:20px}
+.list{display:grid;gap:10px}
+.list article{background:var(--white);border-radius:18px;box-shadow:0 4px 0 var(--line);padding:14px 16px;border-left:8px solid var(--cyan)}
+.list.m article{border-left-color:var(--orange)}
+.list b{display:block;font:700 14.5px var(--body);margin-bottom:4px}
+.list p{margin:0;font:500 13.5px/1.5 var(--body)}
+.list p+p{margin-top:6px;color:var(--blue);font-weight:600}
+.key{background:var(--blue);color:var(--white);border-radius:26px;padding:22px;display:grid;gap:12px}
+.key small{font:700 11px var(--body);letter-spacing:.08em;color:var(--sky)}
+.key .q{font:400 28px/1.05 var(--display)}
+.key p{margin:0;font:500 14px/1.55 var(--body)}
+.key blockquote{margin:0;padding:14px 16px;border-radius:16px;background:var(--white);color:var(--deep);font:500 14px/1.6 var(--body)}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.plan article{background:var(--deep);color:var(--white);border-radius:20px;padding:16px}
+.plan b{display:block;font:400 24px/1.05 var(--display);color:var(--gold);margin-bottom:6px}
+.plan p{margin:0;font:500 13px/1.5 var(--body);color:#E3F1F7}
+details.trans{margin-top:20px;background:var(--white);border-radius:20px;box-shadow:0 4px 0 var(--line);padding:14px 18px}
+details.trans summary{cursor:pointer;font:700 14px var(--body)}
+details.trans div{margin-top:10px;display:grid;gap:8px;font:500 13.5px/1.5 var(--body)}
+details.trans b{font-weight:800}
+.actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:28px}
+.wa{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:20px;background:var(--white);color:var(--ink);text-decoration:none;box-shadow:0 4px 0 var(--line);max-width:520px;margin:20px auto 0}
+.wa .ic{flex:none;width:44px;height:44px;border-radius:50%;background:#25D366;color:var(--white);display:flex;align-items:center;justify-content:center}
+.wa b{display:block;font:400 22px/1 var(--display)}
+.wa small{display:block;font:600 12px var(--body);color:var(--ink-soft)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;padding:12px 18px;border-radius:999px;background:var(--night);color:var(--white);font:700 13px var(--body);box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center}
+
+@media (max-width: 720px){
+  .coaches{grid-template-columns:repeat(5,minmax(58px,1fr));overflow-x:auto}
+  .coaches button{font-size:14px}
+  .rules{grid-template-columns:1fr;gap:6px}
+  .field{min-height:0}
+  .ghostword{display:none}
+  .mascot{min-height:150px}
+  .mascot img{width:min(180px,50%)}
+  .board>span{font-size:18px;padding:5px 9px}
+  .board .b3{display:none}
+  .qcard{margin:0 12px 12px}
+  .panel.narr{max-height:300px}
+  .scorecard .n{font-size:96px}
+  .tag{display:none}
+  .btn.big{width:100%;padding:0 20px;font-size:30px}
+}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <a class="back" id="back" href="/web/hub.html" aria-label="Volver al camp"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5 L8 12 L15 19"></path></svg></a>
+    <img class="logo" src="/assets/wexpand-logo-blanco.png" alt="Wexpand">
+    <span class="tag">LA CANCHA</span>
+    <span class="grow"></span>
+  </div>
+</header>
+
+<!-- ================= LA PREVIA ================= -->
+<main class="wrap" id="vPrevia">
+  <div class="hero">
+    <div>
+      <h1>La <span>previa</span></h1>
+      <p>Prepara tu partido: tu CV, la vacante y el coach que te va a entrevistar. La entrevista es por voz, como una real.</p>
+    </div>
+    <span class="voz"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"></rect><path d="M5 11 a7 7 0 0 0 14 0"></path><path d="M12 18 V21"></path></svg>Solo voz · hasta 30 min</span>
+  </div>
+  <div class="alert" id="noVoice" hidden>Tu navegador no permite entrevistas por voz. Abre Training Camp en <b>Chrome</b> o <b>Edge</b> (computadora o Android) o en <b>Safari</b> (iPhone) y vuelve a entrar.</div>
+
+  <div class="grid" style="margin-top:4px">
+    <section class="card" aria-labelledby="h1">
+      <h2 id="h1"><b>01</b>Tu scouting report</h2>
+      <p class="hint">El coach usa tu CV para hacerte preguntas sobre tu experiencia.</p>
+      <div class="seg" role="group" aria-label="De dónde tomamos tu CV" id="cvSrc">
+        <button type="button" data-src="vestidor">Mi CV del Vestidor</button>
+        <button type="button" data-src="pdf">Subir PDF</button>
+        <button type="button" data-src="texto">Pegar texto</button>
+      </div>
+      <div class="cvbox" id="cvBox"><span class="ic">CV</span><span><b id="cvName">Sin CV todavía</b><small id="cvInfo">Elige una opción</small></span></div>
+      <label class="btn sec file" id="pdfBtn" hidden>Elegir PDF<input type="file" id="pdfIn" accept="application/pdf"></label>
+      <textarea class="in" id="cvText" placeholder="Pega aquí el texto de tu CV" hidden></textarea>
+    </section>
+
+    <section class="card" aria-labelledby="h2">
+      <h2 id="h2"><b>02</b>El rival: la vacante</h2>
+      <p class="hint">Pega la descripción del puesto. Si no tienes una, el coach te entrevista para un puesto acorde a tu CV.</p>
+      <textarea class="in" id="vacante" placeholder="Ej. Analista de Datos Jr. — Buscamos a alguien con SQL y Power BI…"></textarea>
+    </section>
+
+    <section class="card" aria-labelledby="h3">
+      <h2 id="h3"><b>03</b>Tu coach y las reglas</h2>
+      <div class="coaches" id="coaches" role="group" aria-label="Elige a tu coach"></div>
+      <p class="coachtxt" id="coachTxt"></p>
+      <div class="rules"><span>IDIOMA</span><div class="seg" id="langSeg" role="group" aria-label="Idioma"><button type="button" data-l="es">Español</button><button type="button" data-l="en">English</button></div></div>
+      <div class="rules"><span>DURACIÓN</span><div class="seg" id="durSeg" role="group" aria-label="Duración"><button type="button" data-d="10">10 min</button><button type="button" data-d="20">20 min</button><button type="button" data-d="30">30 min</button></div></div>
+      <div class="rules"><span>MODO</span><div><span class="voz" style="padding:8px 14px">Solo voz</span></div></div>
+    </section>
+  </div>
+
+  <div class="go">
+    <button type="button" class="btn big" id="start">Arranca el partido <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4 L20 12 L7 20 Z"></path></svg></button>
+    <p class="fine" id="startNote">Busca un lugar tranquilo y permite el micrófono. No grabamos tu audio: guardamos la transcripción para darte tu análisis.</p>
+  </div>
+</main>
+
+<!-- ================= EN VIVO ================= -->
+<main class="wrap" id="vVivo" hidden>
+  <div class="live">
+    <section class="field" aria-label="Entrevista en vivo">
+      <svg class="lines" viewBox="0 0 1000 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><rect x="40" y="40" width="920" height="560" fill="none" stroke="#96D4E7" stroke-width="3"></rect><line x1="500" y1="40" x2="500" y2="600" stroke="#96D4E7" stroke-width="3"></line><circle cx="500" cy="320" r="100" fill="none" stroke="#96D4E7" stroke-width="3"></circle><rect x="40" y="200" width="120" height="240" fill="none" stroke="#96D4E7" stroke-width="3"></rect><rect x="840" y="200" width="120" height="240" fill="none" stroke="#96D4E7" stroke-width="3"></rect></svg>
+      <div class="ghostword" aria-hidden="true">EN VIVO</div>
+      <div class="board">
+        <span class="b1"><img src="/assets/wexpand-logo-azul.png" alt="Wexpand"></span>
+        <span class="b2" id="clock" aria-label="Tiempo restante">20:00</span>
+        <span class="b3" id="boardTitle">Entrevista</span>
+        <span class="b4"><span class="dot"></span>EN VIVO</span>
+      </div>
+      <div class="mascot" id="mascot"><img id="coachImg" src="/assets/wx-futbol.png" alt=""></div>
+      <div class="qcard">
+        <div class="qtags"><span class="t1" id="qNum">CALENTAMIENTO</span><span class="t2" id="qComp" hidden></span></div>
+        <div class="qtext"><p id="qText" aria-live="polite">Conectando con tu coach…</p></div>
+        <div class="qstate" id="qState"><i></i><span id="qStateTxt">Preparando la cancha…</span></div>
+      </div>
+    </section>
+    <aside class="side">
+      <div class="panel stats">
+        <h3>Stats en vivo</h3>
+        <div class="kpis">
+          <div><b id="kResp">0</b><small>RESPUESTAS</small></div>
+          <div><b id="kPpm">–</b><small>PALABRAS/MIN</small></div>
+          <div><b id="kMul">0</b><small>MULETILLAS</small></div>
+        </div>
+        <div class="star" aria-label="Método STAR en tu última respuesta"><span id="sS">S</span><span id="sT">T</span><span id="sA">A</span><span id="sR">R</span></div>
+        <p class="tip" id="tip">Responde con Situación, Tarea, Acción y Resultado.</p>
+      </div>
+      <div class="panel narr">
+        <h3>Narración del partido</h3>
+        <div class="log" id="log" aria-live="polite"></div>
+      </div>
+    </aside>
+  </div>
+  <div class="controls">
+    <button type="button" class="btn ghost" id="repeat">Repetir pregunta</button>
+    <button type="button" class="mic" id="mic" disabled aria-label="Micrófono"><span id="micIcon"></span><span id="micLbl">ESPERA</span></button>
+    <button type="button" class="btn ghost" id="endBtn">Terminar partido</button>
+    <p class="ctlnote" id="ctlNote">Cuando termines de hablar, toca el botón o guarda silencio unos segundos.</p>
+  </div>
+  <div class="ticker" aria-hidden="true"><b>COACH</b><div><span>Situación → Tarea → Acción → Resultado ✦</span><span>Respira, tienes tiempo ✦</span><span>Habla de “yo”, no de “nosotros” ✦</span><span>Cierra con un número ✦</span><span>Situación → Tarea → Acción → Resultado ✦</span><span>Respira, tienes tiempo ✦</span><span>Habla de “yo”, no de “nosotros” ✦</span><span>Cierra con un número ✦</span></div></div>
+</main>
+
+<!-- ================= ANALIZANDO ================= -->
+<main class="wrap" id="vAnal" hidden>
+  <div class="loading">
+    <img src="/assets/wx-basquetbol.png" alt="">
+    <h2 id="analTitle">Revisando la repetición…</h2>
+    <p id="analTxt">Tu coach de análisis está viendo el partido jugada por jugada.</p>
+    <div id="analErr" hidden style="display:grid;gap:10px;justify-items:center">
+      <p class="alert" id="analErrTxt"></p>
+      <button type="button" class="btn big" id="analRetry">Reintentar análisis</button>
+    </div>
+  </div>
+</main>
+
+<!-- ================= RESUMEN ================= -->
+<main class="wrap" id="vRes" hidden>
+  <div class="hero" style="margin-bottom:16px"><div><h1>Resumen del <span>partido</span></h1><p id="resMeta"></p></div></div>
+  <div class="res-hero">
+    <div class="scorecard"><div class="n" id="rScore">0<small>/100</small></div><div><h2 id="rVer"></h2><p id="rSum"></p></div><img src="/assets/wx-basquetbol.png" alt=""></div>
+    <div class="boxscore">
+      <div><b id="bDur">0</b><small>MINUTOS JUGADOS</small></div>
+      <div><b id="bResp">0</b><small>RESPUESTAS</small></div>
+      <div><b id="bPpm">–</b><small>PALABRAS POR MINUTO</small></div>
+      <div><b id="bStar">–</b><small>RESPUESTAS CON RESULTADO</small></div>
+    </div>
+  </div>
+  <div id="rIngles"></div>
+  <h2 class="sec-h">Stats por <span>competencia</span></h2>
+  <div class="comp" id="rComp"></div>
+  <div class="two">
+    <div><h2 class="sec-h">Lo que te <span>salió bien</span></h2><div class="list" id="rFor"></div></div>
+    <div><h2 class="sec-h">Lo que hay que <span>entrenar</span></h2><div class="list m" id="rMej"></div></div>
+  </div>
+  <h2 class="sec-h">Revisión <span>VAR</span>: la jugada clave</h2>
+  <div class="key" id="rKey"></div>
+  <h2 class="sec-h">Tu plan de <span>entrenamiento</span></h2>
+  <div class="plan" id="rPlan"></div>
+  <details class="trans"><summary>Ver la transcripción completa</summary><div id="rTrans"></div></details>
+  <div class="actions">
+    <button type="button" class="btn big" id="again">Jugar otra vez</button>
+    <button type="button" class="btn sec" id="dlRes">Descargar mi análisis (PDF)</button>
+    <a class="btn sec" id="toHub" href="/web/hub.html">Volver al camp</a>
+  </div>
+  <a class="wa" href="https://chat.whatsapp.com/EYc03Tpy4Jq5jjlr5EIv8L" target="_blank" rel="noopener">
+    <span class="ic"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11.5a8.5 8.5 0 0 1-12.6 7.4L3 20l1.2-4.2A8.5 8.5 0 1 1 20 11.5z"></path></svg></span>
+    <span style="flex:1"><b>Comparte tu resultado en la comunidad</b><small>Únete al grupo de WhatsApp del camp.</small></span>
+  </a>
+</main>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="/js/tc.js"></script>
+<script src="/vendor/jspdf.umd.min.js" defer></script>
+<script src="/js/cancha.js" defer></script>
+</body>
+</html>

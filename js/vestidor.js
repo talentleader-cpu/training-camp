@@ -7,7 +7,7 @@
   var jugador = TC.jugador() || {};
   var mobile = window.innerWidth < 768;
   var hubUrl = mobile ? '/app/hub.html' : '/web/hub.html';
-  $('back').href = hubUrl; $('nextCancha').href = hubUrl;
+  $('back').href = hubUrl;
 
   var T = {
     es: { edu: 'Educación', exp: 'Experiencia', pro: 'Proyectos y liderazgo', hab: 'Habilidades e intereses',

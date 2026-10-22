@@ -70,6 +70,18 @@
         acepta_uso_ia: !!(j && j.acepta_uso_ia)
       });
     },
+    guardarEntrevista: function (e) {
+      var j = get('tc_jugador');
+      return insert('tc_entrevistas', {
+        jugador_id: j ? j.id : null,
+        coach: e.coach, idioma: e.idioma === 'en' ? 'en' : 'es', duracion_min: e.duracion_min,
+        duracion_real_seg: Math.max(0, Math.min(3600, Math.round(e.duracion_real_seg || 0))),
+        vacante: e.vacante ? String(e.vacante).slice(0, 8000) : null,
+        cv: e.cv || null, transcripcion: e.transcripcion || [], evaluacion: e.evaluacion || null,
+        puntaje: e.evaluacion && typeof e.evaluacion.puntaje === 'number' ? e.evaluacion.puntaje : null,
+        acepta_uso_ia: !!(j && j.acepta_uso_ia)
+      });
+    },
     primerNombre: function () {
       var j = get('tc_jugador');
       return j && j.nombre ? String(j.nombre).trim().split(/\s+/)[0] : '';

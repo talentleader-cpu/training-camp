@@ -11,6 +11,9 @@
   ],
   "functions": {
     "api/cv-coach.js": { "maxDuration": 60 },
-    "api/cv-traducir.js": { "maxDuration": 60 }
+    "api/cv-traducir.js": { "maxDuration": 60 },
+    "api/cancha-turno.js": { "maxDuration": 60 },
+    "api/cancha-evaluar.js": { "maxDuration": 60 },
+    "api/cv-leer.js": { "maxDuration": 60 }
   }
 }

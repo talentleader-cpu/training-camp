@@ -48,7 +48,7 @@ async function claude(body) {
     method: 'POST',
     headers: Object.assign({ 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       process.env.ANTHROPIC_WORKSPACE_ID ? { 'anthropic-workspace-id': process.env.ANTHROPIC_WORKSPACE_ID } : {}),
-    body: JSON.stringify(Object.assign({ model: MODEL }, body))
+    body: JSON.stringify(Object.assign({}, body, { model: body.model || MODEL }))
   });
   if (!r.ok) {
     const t = await r.text();
