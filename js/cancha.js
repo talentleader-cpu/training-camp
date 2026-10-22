@@ -99,11 +99,21 @@
   function pickVoice(lang) {
     if (!TTS) return null;
     var vs = TTS.getVoices() || []; if (!vs.length) return null;
-    var pref = lang === 'en' ? ['en-us', 'en-gb', 'en'] : ['es-mx', 'es-us', 'es-419', 'es-es', 'es'];
-    var good = /natural|neural|google|online|premium|enhanced|paulina|sabina|dalia|jorge|samantha|m[oó]nica|ava|allison/i;
+    var pref = lang === 'en' ? ['en-us', 'en-gb', 'en-au', 'en-ca', 'en'] : ['es-mx', 'es-us', 'es-419', 'es-es', 'es'];
+    function score(v) { // prefiere voces neuronales gratuitas: Edge "Online (Natural)", Safari "Premium/Enhanced", Chrome "Google"
+      var n = v.name || '', s = 0;
+      if (/natural|neural/i.test(n)) s += 50;
+      if (/premium/i.test(n)) s += 40;
+      if (/enhanced|mejorad/i.test(n)) s += 30;
+      if (/online/i.test(n)) s += 20;
+      if (/^google/i.test(n)) s += 15;
+      if (/paulina|sabina|dalia|jorge|samantha|ava|allison|aria|jenny|guy/i.test(n)) s += 5;
+      if (/compact|espeak|eloquence|novelty|bad news|bells|bubbles|cellos|zarvox|whisper|trinoids|organ|albert|jester|superstar|wobble|boing/i.test(n)) s -= 60;
+      return s;
+    }
     for (var i = 0; i < pref.length; i++) {
       var c = vs.filter(function (v) { return String(v.lang).replace('_', '-').toLowerCase().indexOf(pref[i]) === 0; });
-      if (c.length) return c.filter(function (v) { return good.test(v.name); })[0] || c[0];
+      if (c.length) return c.sort(function (a, b) { return score(b) - score(a); })[0];
     }
     return null;
   }

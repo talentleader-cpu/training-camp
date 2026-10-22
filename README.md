@@ -47,6 +47,7 @@ Coaches: fútbol (RH y cultura), tenis (inglés), voleibol (técnica y armado de
 | `TC_MODEL` | Opcional. Modelo a usar (por defecto `claude-sonnet-5-5`). |
 | `ELEVENLABS_API_KEY` | Opcional, recomendada. Voz neural nativa para La Cancha (inglés y español). Sin ella se usa la voz del navegador. |
 | `TC_VOZ_EN` / `TC_VOZ_ES` | Opcional. ID de la voz de ElevenLabs para inglés y para español (Voice Library → copiar Voice ID). |
+| `GOOGLE_TTS_API_KEY` | Opcional, opción gratuita. Voz Google Cloud Chirp 3 HD (1 millón de caracteres gratis al mes). Se usa si no hay llave de ElevenLabs. Voces: `TC_VOZ_GOOGLE_EN`, `TC_VOZ_GOOGLE_ES`. |
 | `OPENAI_API_KEY` | Alternativa a ElevenLabs para la voz (`gpt-4o-mini-tts`). Solo se usa si no hay llave de ElevenLabs. |
 
 ### Ver los registros

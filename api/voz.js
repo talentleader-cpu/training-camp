@@ -1,5 +1,6 @@
 // Training Camp · La Cancha: voz neural del coach (inglés nativo y español).
-// Usa ElevenLabs si existe ELEVENLABS_API_KEY; si no, OpenAI si existe OPENAI_API_KEY.
+// Orden: ElevenLabs (ELEVENLABS_API_KEY), Google Cloud Chirp 3 HD (GOOGLE_TTS_API_KEY; 1 millón de caracteres gratis al mes)
+// y OpenAI (OPENAI_API_KEY).
 // Sin llave responde 501 y la página usa la voz del navegador.
 const MAX = 900;
 
@@ -8,6 +9,11 @@ const ELEVEN = {
   // IDs de voces de ElevenLabs; se pueden cambiar en Vercel sin tocar código.
   en: process.env.TC_VOZ_EN || 'EXAVITQu4vr4xnSDxMaL',
   es: process.env.TC_VOZ_ES || process.env.TC_VOZ_EN || 'EXAVITQu4vr4xnSDxMaL'
+};
+const GOOGLE = {
+  // Voces Chirp 3 HD: Aoede, Kore, Leda, Zephyr (femeninas); Charon, Fenrir, Orus, Puck (masculinas).
+  en: { languageCode: 'en-US', name: process.env.TC_VOZ_GOOGLE_EN || 'en-US-Chirp3-HD-Aoede' },
+  es: { languageCode: process.env.TC_VOZ_GOOGLE_ES_LANG || 'es-US', name: process.env.TC_VOZ_GOOGLE_ES || 'es-US-Chirp3-HD-Aoede' }
 };
 const OPENAI = {
   modelo: process.env.TC_VOZ_MODELO_OPENAI || 'gpt-4o-mini-tts',
@@ -20,6 +26,7 @@ const OPENAI = {
 
 function proveedor() {
   if (process.env.ELEVENLABS_API_KEY) return 'elevenlabs';
+  if (process.env.GOOGLE_TTS_API_KEY) return 'google';
   if (process.env.OPENAI_API_KEY) return 'openai';
   return '';
 }
@@ -51,6 +58,22 @@ module.exports = async function handler(req, res) {
         headers: { 'xi-api-key': process.env.ELEVENLABS_API_KEY, 'content-type': 'application/json', accept: 'audio/mpeg' },
         body: JSON.stringify({ text: texto, model_id: ELEVEN.modelo, language_code: idioma, voice_settings: { stability: 0.5, similarity_boost: 0.8, style: 0.15, use_speaker_boost: true } })
       });
+    } else if (prov === 'google') {
+      const g = await fetch('https://texttospeech.googleapis.com/v1/text:synthesize?key=' + encodeURIComponent(process.env.GOOGLE_TTS_API_KEY), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', referer: 'https://' + (req.headers['x-forwarded-host'] || req.headers.host || '') + '/' },
+        body: JSON.stringify({ input: { text: texto }, voice: GOOGLE[idioma], audioConfig: { audioEncoding: 'MP3' } })
+      });
+      if (!g.ok) {
+        console.error('voz_error', prov, g.status, (await g.text()).slice(0, 300));
+        return res.status(502).json({ error: 'voz_no_disponible' });
+      }
+      const j = await g.json();
+      if (!j.audioContent) return res.status(502).json({ error: 'voz_no_disponible' });
+      const audio = Buffer.from(j.audioContent, 'base64');
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', String(audio.length));
+      return res.status(200).send(audio);
     } else {
       r = await fetch('https://api.openai.com/v1/audio/speech', {
         method: 'POST',
