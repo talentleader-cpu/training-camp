@@ -156,6 +156,9 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
 .consent input{width:22px;height:22px;margin:0;flex:none;accent-color:var(--blue)}
 .consent a{color:var(--blue);font-weight:700}
 .err{margin:0;font:700 13px var(--body);color:#B4531A}
+.f.bad{border-bottom-color:#E0582B}.f.bad label{color:#B4531A}
+fieldset.bad .seg{box-shadow:0 0 0 3px #E0582B;border-radius:14px}
+.req{color:var(--orange);font-style:normal}
 .small{font:500 12px var(--body);color:var(--ink-soft);text-align:center}
 .done{flex:2 1 460px;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:14px;padding-top:8px}
 .done h2{color:var(--blue)}
@@ -319,8 +322,8 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
           <button type="button" aria-pressed="false" data-v="Profesionista">PROFESIONISTA</button>
         </div>
       </fieldset>
-      <fieldset>
-        <legend class="legend"><em>08</em> · NIVEL DE INGLÉS (opcional)</legend>
+      <fieldset id="engSet">
+        <legend class="legend"><em>08</em> · NIVEL DE INGLÉS</legend>
         <div class="seg c6" id="eng">
           <button type="button" aria-pressed="false" data-v="A1">A1</button><button type="button" aria-pressed="false" data-v="A2">A2</button><button type="button" aria-pressed="false" data-v="B1">B1</button><button type="button" aria-pressed="false" data-v="B2">B2</button><button type="button" aria-pressed="false" data-v="C1">C1</button><button type="button" aria-pressed="false" data-v="C2">C2</button>
         </div>
@@ -462,6 +465,8 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
     $('pvSub').textContent=`${state.liga} · ${lugar}`;
   }
   [nombre,pos,ciudad,estado].forEach(el=>el.addEventListener('input',upd));
+  ['nombre','correo','cel','pos','estado','ciudad'].forEach(id=>['input','change'].forEach(ev=>$(id).addEventListener(ev,()=>{$(id).closest('.f').classList.remove('bad');$(id).removeAttribute('aria-invalid')})));
+  $('eng').addEventListener('click',()=>$('engSet').classList.remove('bad'));
   function group(id,key){
     $(id).addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
       $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));state[key]=b.dataset.v;upd()});
@@ -472,10 +477,21 @@ fieldset{border:0;margin:0;padding:0;min-width:0}
   $('form').addEventListener('submit',e=>{
     e.preventDefault();
     const err=$('err'),miss=[];
-    if(nombre.value.trim().length<2)miss.push('tu nombre');
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test($('correo').value.trim()))miss.push('un correo válido');
-    if(!$('c1').checked)miss.push('aceptar el aviso de privacidad');
-    if(miss.length){err.textContent=`Para sellar tu fichaje falta ${miss.join(', ')}.`;err.hidden=false;return}
+    // toda la ficha es obligatoria
+    const checks=[
+      [nombre,nombre.value.trim().split(/\s+/).filter(Boolean).length>=2,'tu nombre completo'],
+      [$('correo'),/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test($('correo').value.trim()),'un correo válido'],
+      [$('cel'),/^\d{10,13}$/.test($('cel').value.replace(/\D/g,'')),'tu celular a 10 dígitos'],
+      [pos,!!pos.value,'tu carrera o industria'],
+      [estado,!!estado.value,'tu estado'],
+      [ciudad,ciudad.value.trim().length>=2,'tu ciudad']
+    ];
+    let first=null;
+    checks.forEach(([el,ok,txt])=>{const box=el.closest('.f');box.classList.toggle('bad',!ok);el.setAttribute('aria-invalid',String(!ok));if(!ok){miss.push(txt);first=first||el}});
+    $('engSet').classList.toggle('bad',!state.eng);
+    if(!state.eng){miss.push('tu nivel de inglés');first=first||$('eng').querySelector('button')}
+    if(!$('c1').checked){miss.push('aceptar el aviso de privacidad');first=first||$('c1')}
+    if(miss.length){err.textContent=`Para sellar tu fichaje falta ${miss.join(', ')}.`;err.hidden=false;if(first)first.focus();return}
     err.hidden=true;btnSubmit.disabled=true;btnSubmit.textContent='Sellando…';
     const posTxt=pos.value?pos.options[pos.selectedIndex].text:'';
     TC.registrar({nombre:nombre.value.trim(),correo:$('correo').value.trim(),celular:$('cel').value.trim(),carrera:posTxt,
