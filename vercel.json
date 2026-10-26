@@ -2,6 +2,7 @@
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [
+    { "source": "/:path*", "has": [{ "type": "host", "value": "training-camp-psi.vercel.app" }], "destination": "https://camp.wexpandmx.com/:path*", "permanent": true },
     { "source": "/web", "destination": "/web/hub" },
     { "source": "/app", "destination": "/app/hub" },
     { "source": "/web/cv-vestidor", "destination": "/cv/" },
