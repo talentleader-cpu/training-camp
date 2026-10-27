@@ -111,6 +111,11 @@ body.intro .panel{transform:translateY(calc(-50% + 14px))}
 .btn{display:flex;align-items:center;justify-content:center;min-height:58px;padding:0 26px;border-radius:999px;text-decoration:none;font:400 26px/1 var(--display);letter-spacing:.04em}
 .btn.pri{background:var(--naranja);color:#fff;box-shadow:0 5px 0 var(--prof)}
 .btn.wa{background:#25D366;color:#053d22;font-size:22px}
+.ya{margin:14px 0 0;font:600 13px var(--body);color:var(--suave)}
+.ya button,.link{border:0;background:none;padding:0;font:700 13px var(--body);color:var(--cancha);text-decoration:underline;cursor:pointer}
+.perfil{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.perfil span{padding:8px 12px;border-radius:12px;background:#E1EFF5;font:600 12.5px var(--body);color:var(--tinta)}
+.perfil b{font:400 20px/1 var(--display);margin-right:4px;color:var(--cancha)}
 .otra{margin-top:14px;border:0;background:none;padding:0;font:700 12.5px var(--body);color:var(--cancha);text-decoration:underline;cursor:pointer}
 
 .saltar{position:fixed;z-index:6;right:24px;bottom:calc(24px + env(safe-area-inset-bottom,0px));min-height:44px;padding:0 18px;border-radius:999px;border:1px solid rgba(255,255,255,.4);background:rgba(0,24,42,.5);color:#fff;font:700 13px var(--body);cursor:pointer;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);transition:opacity .5s}
@@ -187,6 +192,7 @@ body:not(.intro) .presenta{display:none}
         <h2>¿Cómo te llamas?</h2>
         <p class="sub">Tu apellido va en la espalda de tu jersey.</p>
         <div class="campos"><div class="f"><label for="nombre">Nombre completo</label><input id="nombre" class="grande" autocomplete="name" placeholder="Nombre y apellido" enterkeyhint="next"></div></div>
+        <p class="ya">¿Ya tienes ficha? <button type="button" class="aLogin">Entra con tu correo</button></p>
       </div>
 
       <div class="paso" data-p="2" hidden>
@@ -253,14 +259,32 @@ body:not(.intro) .presenta{display:none}
       </div>
     </form>
 
+    <form class="login" id="login" novalidate hidden>
+      <div class="cab"><b>Tu ficha</b></div>
+      <div class="paso">
+        <h2 style="margin-top:12px">Entra a tu ficha</h2>
+        <p class="sub">Escribe tu nombre completo y el correo con el que te registraste.</p>
+        <div class="campos">
+          <div class="f"><label for="lNombre">Nombre completo</label><input id="lNombre" autocomplete="name" placeholder="Nombre y apellido" enterkeyhint="next"></div>
+          <div class="f"><label for="lCorreo">Correo</label><input id="lCorreo" type="email" autocomplete="email" placeholder="tu@correo.com" enterkeyhint="go"></div>
+        </div>
+      </div>
+      <p class="err" id="lErr" role="alert" hidden></p>
+      <div class="nav">
+        <button type="button" class="atras" id="lVolver">Crear ficha nueva</button>
+        <button type="submit" class="sig" id="lEntrar">Entrar</button>
+      </div>
+    </form>
+
     <div class="listo" id="listo" hidden>
       <h2 id="listoT">¡Ya eres parte del camp!</h2>
       <p class="sub" id="listoS">Tu jersey está listo. Empieza por armar tu CV o ve directo a practicar tu entrevista.</p>
+      <div class="perfil" id="perfil" hidden></div>
       <div class="acciones">
         <a class="btn pri" id="goHub" href="/web/hub.html">Entrar al camp</a>
         <a class="btn wa" href="https://chat.whatsapp.com/EYc03Tpy4Jq5jjlr5EIv8L" target="_blank" rel="noopener">Unirme a la comunidad</a>
       </div>
-      <button type="button" class="otra" id="otra" hidden>¿No eres tú? Crear otra ficha</button>
+      <button type="button" class="otra" id="otra" hidden>¿No eres tú? Crear otra ficha nueva</button>
     </div>
   </div>
 </aside>
@@ -278,18 +302,17 @@ const movil = () => innerWidth < 900;
 const hub = innerWidth < 768 ? '/app/hub.html' : '/web/hub.html';
 $('goHub').href = hub;
 const yo = TC.jugador();
-let visto = false; try { visto = sessionStorage.getItem('tc_intro') === '1'; sessionStorage.setItem('tc_intro', '1'); } catch (e) {}
 
 /* ---------- estadio 3D ---------- */
 let E = null;
 function fin() { body.classList.remove('intro'); }
 if (soporta3D()) {
   try {
-    E = crearEstadio($('estadio'), { reduce, saltar: visto || !!(yo && yo.id), alListo: fin });
+    E = crearEstadio($('estadio'), { reduce, saltar: !!(yo && yo.id), alListo: fin });
   } catch (e) { console.warn('3D no disponible', e); E = null; }
 }
 if (!E) { body.classList.add('sin3d'); fin(); }
-else if (reduce || visto || (yo && yo.id)) setTimeout(fin, 300);
+else if (reduce || (yo && yo.id)) setTimeout(fin, 300);
 $('saltar').onclick = () => { E && E.saltar(); fin(); };
 addEventListener('keydown', e => { if (e.key === 'Escape' && body.classList.contains('intro')) $('saltar').click(); });
 
@@ -304,7 +327,7 @@ encuadre(); addEventListener('resize', encuadre);
 /* ---------- hoja en celular ---------- */
 function abrirHoja() { body.classList.add('hoja'); body.setAttribute('data-fb-oculto', ''); encuadre(); setTimeout(() => enfoca(), 250); }
 $('abrirBtn').onclick = abrirHoja;
-$('entrar').addEventListener('click', e => { if ($('entrar').getAttribute('href') === '#ficha') { e.preventDefault(); if (movil()) abrirHoja(); else enfoca(); } });
+$('entrar').addEventListener('click', e => { if ($('entrar').getAttribute('href') === '#ficha') { e.preventDefault(); verLogin(true); } });
 
 /* ---------- pasos ---------- */
 const state = { liga: 'Estudiante', eng: '' };
@@ -313,7 +336,7 @@ const nombre = $('nombre'), pos = $('pos');
 const lados = [null, 'espalda', 'frente', 'espalda', 'frente', 'frente', 'espalda'];
 function enfoca() { const p = document.querySelector('.paso[data-p="' + paso + '"]'); const el = p && p.querySelector('input:not([type=checkbox]),select'); if (el && (!movil() || body.classList.contains('hoja'))) el.focus({ preventScroll: true }); }
 function muestraPaso(n, dir) {
-  document.querySelectorAll('.paso').forEach(p => { const es = +p.dataset.p === n; p.hidden = !es; if (es) { p.classList.toggle('atras', dir < 0); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; } });
+  document.querySelectorAll('#form .paso').forEach(p => { const es = +p.dataset.p === n; p.hidden = !es; if (es) { p.classList.toggle('atras', dir < 0); p.style.animation = 'none'; void p.offsetWidth; p.style.animation = ''; } });
   paso = n;
   document.querySelectorAll('.barras i').forEach((b, i) => b.classList.toggle('ok', i < n));
   $('contador').textContent = 'Paso ' + n + ' de ' + TOTAL;
@@ -339,7 +362,7 @@ function valida(n) {
   $('err').hidden = true; return true;
 }
 $('atras').onclick = () => muestraPaso(Math.max(1, paso - 1), -1);
-document.querySelectorAll('.paso input:not([type=checkbox])').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('sig').click(); } }));
+document.querySelectorAll('#form .paso input:not([type=checkbox])').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('sig').click(); } }));
 
 /* ---------- el jersey reacciona ---------- */
 let tNom = 0;
@@ -384,12 +407,48 @@ function listo(j, nuevo) {
   if (E && movil() && body.classList.contains('hoja')) E.encuadre(.5, .3, 24);
   body.removeAttribute('data-fb-oculto');
   $('tip').hidden = true;
+  $('login').hidden = true;
+  if (j.cvs != null) {
+    const c = [['cvs', j.cvs == 1 ? 'CV armado' : 'CVs armados'], ['entrevistas', j.entrevistas == 1 ? 'entrevista' : 'entrevistas']].map(x => '<span><b>' + (+j[x[0]] || 0) + '</b>' + x[1] + '</span>');
+    if (j.mejor != null) c.push('<span><b>' + (+j.mejor) + '</b>mejor puntaje</span>');
+    $('perfil').innerHTML = c.join(''); $('perfil').hidden = false;
+  }
   if (nuevo) $('goHub').focus({ preventScroll: true });
 }
 $('otra').onclick = () => {
   ['tc_jugador', 'tc_vestidor_v1', 'tc_cancha_previa', 'tc_cancha_ultima'].forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
   location.replace('/');
 };
+
+/* ---------- volver a entrar con nombre y correo ---------- */
+function verLogin(si) {
+  if (movil() && !body.classList.contains('hoja')) abrirHoja();
+  $('form').hidden = si; $('login').hidden = !si; $('lErr').hidden = true;
+  if (si) { if (nombre.value && !$('lNombre').value) $('lNombre').value = nombre.value; if (E) { E.paso(0); E.mostrar('espalda'); } setTimeout(() => $('lNombre').focus({ preventScroll: true }), 60); }
+  else muestraPaso(paso, -1);
+}
+document.querySelectorAll('.aLogin').forEach(b => b.onclick = () => verLogin(true));
+$('lVolver').onclick = () => verLogin(false);
+$('lNombre').addEventListener('input', () => { E && E.datos($('lNombre').value, ''); });
+$('login').addEventListener('submit', e => {
+  e.preventDefault();
+  const nom = $('lNombre').value.trim(), cor = $('lCorreo').value.trim(), err = $('lErr');
+  const okN = nom.split(/\s+/).filter(Boolean).length >= 2, okC = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(cor);
+  $('lNombre').closest('.f').classList.toggle('bad', !okN); $('lCorreo').closest('.f').classList.toggle('bad', !okC);
+  if (!okN || !okC) { err.textContent = !okN ? 'Escribe tu nombre y al menos un apellido.' : 'Escribe un correo válido.'; err.hidden = false; return; }
+  const b = $('lEntrar'); b.disabled = true; b.textContent = 'Buscando…'; err.hidden = true;
+  fetch(TC.cfg.supabaseUrl + '/rest/v1/rpc/tc_entrar', { method: 'POST', headers: { apikey: TC.cfg.supabaseKey, Authorization: 'Bearer ' + TC.cfg.supabaseKey, 'Content-Type': 'application/json' }, body: JSON.stringify({ p_nombre: nom, p_correo: cor }) })
+    .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(j => {
+      b.disabled = false; b.textContent = 'Entrar';
+      if (!j || !j.id) { err.textContent = 'No encontramos una ficha con ese nombre y correo. Revisa cómo los escribiste o crea una ficha nueva.'; err.hidden = false; return; }
+      TC.guardarJugadorLocal({ id: j.id, nombre: j.nombre, liga: j.liga, carrera: j.carrera, ciudad: j.ciudad, estado: j.estado, ingles: j.ingles, acepta_uso_ia: j.acepta_uso_ia, creado: j.creado });
+      listo(j, false);
+      if (E) E.celebrar();
+    })
+    .catch(() => { b.disabled = false; b.textContent = 'Entrar'; err.textContent = 'No pudimos conectarnos. Revisa tu internet e intenta de nuevo.'; err.hidden = false; });
+});
+document.querySelectorAll('#login input').forEach(i => i.addEventListener('input', () => i.closest('.f').classList.remove('bad')));
 
 if (yo && yo.id) listo(yo, false); else muestraPaso(1, 1);
 </script>
