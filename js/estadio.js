@@ -165,22 +165,22 @@ export function crearEstadio(canvas, opts = {}) {
   function ajusta(x, txt, max, px, fam, peso) { const f = q => (peso ? peso + ' ' : '') + q + 'px ' + fam; x.font = f(px); const w = x.measureText(txt).width; if (w > max) { px = Math.floor(px * max / w); x.font = f(px); } return px; }
   function texto(x, txt, y, px, fam, max, borde, peso) {
     ajusta(x, txt, max, px, fam, peso); x.textAlign = 'center'; x.textBaseline = 'alphabetic';
-    if (borde) { x.lineJoin = 'round'; x.lineWidth = borde; x.strokeStyle = '#00415E'; x.strokeText(txt, 150, y); }
+    if (borde) { x.lineJoin = 'round'; x.lineWidth = borde; x.strokeStyle = '#00273F'; x.strokeText(txt, 150, y); }
     x.fillText(txt, 150, y);
   }
   function pinta(l) {
     const x = l.c.getContext('2d'); x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, TW, TH); x.scale(K, K);
     const p = new Path2D(D_JERSEY);
-    const g = x.createLinearGradient(0, 0, 300, 330); g.addColorStop(0, '#FF9A4A'); g.addColorStop(.55, '#F07E2E'); g.addColorStop(1, '#D8641A');
+    const g = x.createLinearGradient(0, 0, 300, 330); g.addColorStop(0, '#1E74C9'); g.addColorStop(.55, '#0653A1'); g.addColorStop(1, '#03417F');
     x.fillStyle = g; x.fill(p);
     x.save(); x.clip(p);
-    x.fillStyle = '#0653A1'; x.fill(new Path2D(D_MANGAS));
-    x.strokeStyle = '#F7A700'; x.lineWidth = 4; x.beginPath(); x.moveTo(8, 108); x.lineTo(54, 128); x.moveTo(292, 108); x.lineTo(246, 128); x.stroke();
-    x.fillStyle = 'rgba(0,65,94,.16)'; x.fillRect(64, 104, 13, 214); x.fillRect(223, 104, 13, 214);
+    x.fillStyle = '#F4FAFD'; x.fill(new Path2D(D_MANGAS));
+    x.strokeStyle = '#0653A1'; x.lineWidth = 5; x.beginPath(); x.moveTo(8, 108); x.lineTo(54, 128); x.moveTo(292, 108); x.lineTo(246, 128); x.stroke();
+    x.fillStyle = 'rgba(255,255,255,.92)'; x.fillRect(64, 104, 9, 214); x.fillRect(227, 104, 9, 214);
     x.fillStyle = 'rgba(0,0,0,.055)';
     for (let yy = 0; yy < 330; yy += 4.5) for (let xx = (Math.round(yy / 4.5) % 2) * 2.25; xx < 300; xx += 4.5) x.fillRect(xx, yy, 1.3, 1.3);
     const s = x.createLinearGradient(0, 0, 0, 330); s.addColorStop(0, 'rgba(255,255,255,.10)'); s.addColorStop(1, 'rgba(0,0,0,.14)'); x.fillStyle = s; x.fillRect(0, 0, 300, 330);
-    x.strokeStyle = '#00415E'; x.lineCap = 'round';
+    x.strokeStyle = '#FFFFFF'; x.lineCap = 'round';
     if (l.frente) { x.lineWidth = 9; x.beginPath(); x.moveTo(104, 20); x.lineTo(150, 58); x.lineTo(196, 20); x.stroke(); }
     else { x.lineWidth = 8; x.beginPath(); x.moveTo(96, 18); x.bezierCurveTo(112, 32, 188, 32, 204, 18); x.stroke(); }
     x.restore();
@@ -189,12 +189,12 @@ export function crearEstadio(canvas, opts = {}) {
     if (l.frente) {
       x.save(); x.font = '800 15px ' + MONTF; x.textAlign = 'center'; x.fillStyle = '#fff'; x.fillText('WEXPAND', 150, 92); x.restore();
       x.fillStyle = '#fff'; texto(x, datos.numero, 228, 118, BEBAS, 150, 7);
-      x.fillStyle = 'rgba(0,65,94,.75)'; x.font = '700 9px ' + MONTF; x.textAlign = 'center'; x.fillText('TRAINING CAMP', 150, 300);
+      x.fillStyle = 'rgba(255,255,255,.8)'; x.font = '700 9px ' + MONTF; x.textAlign = 'center'; x.fillText('TRAINING CAMP', 150, 300);
     } else {
       const ap = datos.nombre ? apellido(datos.nombre).toUpperCase().slice(0, 24) : 'TU NOMBRE';
       x.fillStyle = '#fff'; texto(x, ap, 92, 40, BEBAS, 160, 5);
       texto(x, datos.numero, 238, 142, BEBAS, 160, 8);
-      x.fillStyle = '#00415E'; texto(x, (datos.carrera || 'Tu carrera').toUpperCase(), 284, 13, MONTF, 168, 0, '800');
+      x.fillStyle = '#FFFFFF'; texto(x, (datos.carrera || 'Tu carrera').toUpperCase(), 284, 13, MONTF, 168, 0, '800');
     }
     l.tex.needsUpdate = true;
   }

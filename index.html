@@ -308,11 +308,11 @@ let E = null;
 function fin() { body.classList.remove('intro'); }
 if (soporta3D()) {
   try {
-    E = crearEstadio($('estadio'), { reduce, saltar: !!(yo && yo.id), alListo: fin });
+    E = crearEstadio($('estadio'), { reduce, saltar: false, alListo: fin });
   } catch (e) { console.warn('3D no disponible', e); E = null; }
 }
 if (!E) { body.classList.add('sin3d'); fin(); }
-else if (reduce || (yo && yo.id)) setTimeout(fin, 300);
+else if (reduce) setTimeout(fin, 300);
 $('saltar').onclick = () => { E && E.saltar(); fin(); };
 addEventListener('keydown', e => { if (e.key === 'Escape' && body.classList.contains('intro')) $('saltar').click(); });
 
