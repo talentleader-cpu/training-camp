@@ -159,7 +159,7 @@
   window.TCFeedback = { abrir: abrir };
 
   // no estorbar durante la entrevista en vivo de La Cancha
-  function revisaVisible() { var v = document.getElementById('vVivo'); var ocultar = !!(v && !v.hidden) || document.body.hasAttribute('data-fb-oculto'); if (box.hidden) tab.hidden = ocultar; }
+  function revisaVisible() { var v = document.getElementById('vVivo'); var ocultar = !!(v && !v.hidden) || document.body.hasAttribute('data-fb-oculto'); if (box.hidden && tab.hidden !== ocultar) tab.hidden = ocultar; }
   function montar() {
     document.body.appendChild(tab); document.body.appendChild(box); revisaVisible();
     if (window.MutationObserver) new MutationObserver(revisaVisible).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden', 'data-fb-oculto'] });
