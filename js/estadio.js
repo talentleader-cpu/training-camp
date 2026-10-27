@@ -106,12 +106,14 @@ export function crearEstadio(canvas, opts = {}) {
 
   /* ---------------- túnel de salida ---------------- */
   const tunel = new THREE.Group(); scene.add(tunel);
-  const tunelMat = new THREE.MeshStandardMaterial({ color: 0x0a2236, roughness: .9, side: THREE.BackSide });
-  const caja = new THREE.Mesh(new THREE.BoxGeometry(7, 4.4, 30), tunelMat); caja.position.set(0, 2.2, 73); tunel.add(caja);
+  const tunelMat = new THREE.MeshStandardMaterial({ color: 0x0a2236, roughness: .9, side: THREE.FrontSide });
+  [[8, 30, 0, 0, 73, -Math.PI / 2, 0], [8, 30, 0, 5.6, 73, Math.PI / 2, 0], [30, 5.6, -4, 2.8, 73, 0, Math.PI / 2], [30, 5.6, 4, 2.8, 73, 0, -Math.PI / 2], [8, 5.6, 0, 2.8, 88, 0, Math.PI]].forEach(([w, h, x, y, z, rx, ry]) => {
+    const pl = new THREE.Mesh(new THREE.PlaneGeometry(w, h), tunelMat); pl.position.set(x, y, z); pl.rotation.set(rx, ry, 0); tunel.add(pl);
+  });
   const tiraTecho = new THREE.MeshBasicMaterial({ color: 0xcfefff }), tiraPared = new THREE.MeshBasicMaterial({ color: 0xF07E2E });
   for (let z = 60; z < 88; z += 2.6) {
-    const t = new THREE.Mesh(new THREE.BoxGeometry(2.6, .06, .5), tiraTecho); t.position.set(0, 4.36, z); tunel.add(t);
-    [-3.46, 3.46].forEach(x => { const p = new THREE.Mesh(new THREE.BoxGeometry(.05, .12, 1.4), tiraPared); p.position.set(x, 1.2, z); tunel.add(p); });
+    const t = new THREE.Mesh(new THREE.BoxGeometry(2.6, .06, .5), tiraTecho); t.position.set(0, 5.56, z); tunel.add(t);
+    [-3.96, 3.96].forEach(x => { const p = new THREE.Mesh(new THREE.BoxGeometry(.05, .12, 1.4), tiraPared); p.position.set(x, 1.2, z); tunel.add(p); });
   }
   const tunelLuz = new THREE.PointLight(0xcfefff, 3, 16, 1.4); tunelLuz.position.set(0, 3.5, 70); scene.add(tunelLuz);
 
@@ -263,13 +265,74 @@ export function crearEstadio(canvas, opts = {}) {
     }
   }
 
+
+  /* ---------------- wexpancito que sale del túnel con el jersey ---------------- */
+  const MAS = !!opts.mascota, SZ = 2.6;
+  let masc = null;
+  if (MAS) {
+    const c = document.createElement('canvas'); c.width = c.height = 512;
+    const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+    const geo = new THREE.PlaneGeometry(SZ, SZ); geo.translate(0, SZ / 2, 0);
+    const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, alphaTest: .35, toneMapped: false }));
+    scene.add(mesh);
+    const sh = new THREE.Mesh(new THREE.CircleGeometry(1, 24), new THREE.MeshBasicMaterial({ map: texturaRadial('rgba(0,0,0,.9)'), color: 0x000000, transparent: true, opacity: .5, depthWrite: false }));
+    sh.rotation.x = -Math.PI / 2; sh.position.y = .02; scene.add(sh);
+    masc = { c, x: c.getContext('2d'), tex, mesh, sh, pos: new THREE.Vector3(0, 0, 79), fase: 0, pose: 'quieto', frente: false, bob: 0, onda: 0 };
+  }
+  function trazo(x, pts, g) {
+    [[g + 12, '#151515'], [g, '#ffffff']].forEach(([w, col]) => {
+      x.beginPath(); x.moveTo(pts[0][0], pts[0][1]); for (let i = 1; i < pts.length; i++) x.lineTo(pts[i][0], pts[i][1]);
+      x.lineWidth = w; x.strokeStyle = col; x.stroke();
+    });
+  }
+  function mano(x, px, py) { x.beginPath(); x.arc(px, py, 17, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#151515'; x.stroke(); }
+  function dibujaMascota(m, t) {
+    const x = m.x, fr = m.frente, pose = m.pose, f = m.fase;
+    x.clearRect(0, 0, 512, 512); x.lineCap = 'round'; x.lineJoin = 'round';
+    // piernas: en vista de frente o de espaldas, al correr se levantan los pies
+    const sube = pose === 'corre' ? [Math.max(0, Math.sin(f)) * 62, Math.max(0, -Math.sin(f)) * 62] : pose === 'salta' ? [46, 46] : [0, 0];
+    [[208, sube[0], -1], [304, sube[1], 1]].forEach(([hx, up, lado]) => {
+      const fy = 486 - up, kx = hx + lado * (6 + up * .35), ky = 410 - up * .45;
+      trazo(x, [[hx, 360], [kx, ky], [hx + lado * 4, fy]], 16);
+      x.beginPath(); x.ellipse(hx + lado * 10, fy + 4, 30, 15, 0, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 6; x.strokeStyle = '#151515'; x.stroke();
+    });
+    // cuerpo en forma de W
+    const W = [[100, 112], [205, 330], [256, 214], [307, 330], [412, 112]];
+    [[118, '#151515'], [100, '#0753A6']].forEach(([w, col]) => {
+      x.beginPath(); x.moveTo(W[0][0], W[0][1]); W.slice(1).forEach(q => x.lineTo(q[0], q[1])); x.lineWidth = w; x.strokeStyle = col; x.stroke();
+    });
+    const dx = fr ? 448 : 64; x.beginPath(); x.arc(dx, 64, 40, 0, 7); x.fillStyle = '#0753A6'; x.fill(); x.lineWidth = 9; x.strokeStyle = '#151515'; x.stroke();
+    // brazos
+    const hombros = [[150, 222], [362, 222]];
+    let manos, codos;
+    if (pose === 'corre') { manos = [[196, 30], [316, 30]]; codos = [[128, 120], [384, 120]]; }
+    else if (pose === 'lanza' || pose === 'salta') { manos = [[120, 26], [392, 26]]; codos = [[104, 120], [408, 120]]; }
+    else if (pose === 'saluda') { const w = Math.sin(t * 11) * 26; manos = [[86, 330], [446 + w, 70]]; codos = [[96, 276], [430, 160]]; }
+    else { manos = [[86, 330], [426, 330]]; codos = [[96, 276], [416, 276]]; }
+    hombros.forEach((h, i) => { trazo(x, [h, codos[i], manos[i]], 12); mano(x, manos[i][0], manos[i][1]); });
+    if (fr) {
+      // ojos
+      [[220, 142], [294, 142]].forEach(([ex, ey]) => {
+        x.beginPath(); x.ellipse(ex, ey, 40, 46, 0, 0, 7); x.fillStyle = '#fff'; x.fill(); x.lineWidth = 8; x.strokeStyle = '#151515'; x.stroke();
+        x.beginPath(); x.arc(ex + 5, ey + 8, 15, 0, 7); x.fillStyle = '#151515'; x.fill();
+        x.beginPath(); x.arc(ex, ey + 2, 5, 0, 7); x.fillStyle = '#fff'; x.fill();
+      });
+      x.lineWidth = 7; x.strokeStyle = '#151515';
+      if (pose === 'quieto') { x.beginPath(); x.arc(257, 212, 24, .2 * Math.PI, .8 * Math.PI); x.stroke(); }
+      else { x.beginPath(); x.ellipse(257, 222, 22, 18, 0, 0, Math.PI); x.closePath(); x.fillStyle = '#151515'; x.fill(); x.beginPath(); x.ellipse(257, 232, 10, 6, 0, 0, 7); x.fillStyle = '#F28C9B'; x.fill(); }
+    }
+    m.tex.needsUpdate = true;
+  }
+
   /* ---------------- cámara: intro, pasos y parallax ---------------- */
   const ruta = new THREE.CatmullRomCurve3([[0, 1.8, 84], [0, 1.8, 66], [0, 2.6, 52], [7, 8, 32], [0, 6.6, 17.5]].map(p => new THREE.Vector3(...p)));
   const miradas = [[0, 1.8, 0], [0, 2.2, 0], [0, 4, 0], [0, 5, 0], [0, 5, 0]].map(p => new THREE.Vector3(...p));
-  const DUR = 5.4, ENC = [1.7, 2.15, 2.6, 3.05], CAE = 3.6, LISTO = 4.6;
+  const DUR = MAS ? 6.2 : 5.4, ENC = MAS ? [1.9, 2.3, 2.7, 3.1] : [1.7, 2.15, 2.6, 3.05], CAE = 3.6, LISTO = MAS ? 5.5 : 4.6;
+  const SALE = .5, LLEGA = 3.9, TIRO = 4.2, Z0 = 79;
+  const finM = () => esMovil() ? [-2.2, 1.5] : [-4.6, -1.5];
   let t0 = performance.now(), tIntro = reduce || opts.saltar ? DUR : 0, avisado = false;
   const est = { anguloObj: 0, angulo: 0, radioObj: 17.5, radio: 17.5, cy: .56, cyObj: .56, cx: .3, cxObj: .3, rot: 0, rotObj: 0, flash: 0, celebra: -1, mouse: [0, 0], caida: 0 };
-  let celebraT = -1, ultimoFuego = 0;
+  let celebraT = -1, ultimoFuego = 0, ahora = 0, saludoT = -1;
 
   function vistaHero(t) {
     const a = est.angulo, r = est.radio, m = reduce ? [0, 0] : est.mouse;
@@ -304,9 +367,9 @@ export function crearEstadio(canvas, opts = {}) {
   let ant = performance.now(), vivo = true;
   function cuadro(now) {
     if (!vivo) return;
-    requestAnimationFrame(cuadro);
-    if (document.hidden) return;
-    const dt = Math.min(.05, (now - ant) / 1000); ant = now; const t = now / 1000;
+    if (!opts.manual) requestAnimationFrame(cuadro);
+    if (document.hidden && !opts.manual) return;
+    const dt = Math.min(.05, (now - ant) / 1000); ant = now; const t = now / 1000; ahora = t;
     if (tIntro < DUR) tIntro += dt;
     const ti = tIntro;
 
@@ -330,8 +393,50 @@ export function crearEstadio(canvas, opts = {}) {
     for (let i = 0; i < nPolvo; i++) { let y = PP.getY(i) + dt * .4; if (y > 30) y = 0; PP.setY(i, y); PP.setX(i, PP.getX(i) + Math.sin(t * .3 + i) * dt * .2); }
     PP.needsUpdate = true;
 
-    // jersey: cae del cielo y luego flota
-    if (ti >= CAE || reduce || opts.saltar) {
+    // wexpancito
+    if (MAS) {
+      const m = masc, [XF, ZF] = finM();
+      if (ti < SALE) { m.pos.set(0, 0, Z0); m.pose = 'corre'; m.frente = false; m.fase += dt * 4; m.bob = Math.abs(Math.sin(m.fase)) * .05; }
+      else if (ti < LLEGA) {
+        const u = (ti - SALE) / (LLEGA - SALE), e = ease(u);
+        m.pos.set(XF * clamp((u - .5) / .5, 0, 1) ** 2, 0, lerp(Z0, ZF, e));
+        const vel = 12 * u * (1 - u) * 4 / (LLEGA - SALE);
+        m.pose = 'corre'; m.frente = false; m.fase += dt * (6 + vel * 9); m.bob = Math.abs(Math.sin(m.fase)) * .26;
+      } else {
+        m.pos.set(XF, 0, ZF); m.frente = true;
+        if (celebraT >= 0 && t - celebraT < 3.2) { m.pose = 'salta'; m.bob = Math.abs(Math.sin((t - celebraT) * 7)) * .9; }
+        else {
+          m.bob = Math.abs(Math.sin(t * 2.2)) * .05;
+          if (ti < TIRO) m.pose = 'quieto';
+          else if (ti < TIRO + .9) m.pose = 'lanza';
+          else if (ti < DUR + 1.8 || (saludoT >= 0 && t - saludoT < 1.8) || t % 8 < 1.5) m.pose = 'saluda';
+          else m.pose = 'quieto';
+        }
+      }
+      m.mesh.position.set(m.pos.x, m.bob, m.pos.z);
+      m.mesh.lookAt(camera.position.x, m.bob, camera.position.z);
+      if (m.pose === 'corre') m.mesh.rotateZ(Math.sin(m.fase) * .06);
+      m.sh.position.set(m.pos.x, .02, m.pos.z); m.sh.material.opacity = .45 - m.bob * .25;
+      dibujaMascota(m, t);
+    }
+
+    // jersey: llega en manos del wexpancito y sale volando a su lugar
+    if (MAS) {
+      jersey.visible = true;
+      const tiro = reduce || opts.saltar ? 1 : clamp((ti - TIRO) / 1.15, 0, 1), e = 1 - Math.pow(1 - tiro, 3);
+      const yb = 5.2 + Math.sin(t * 1.1) * .18 + (celebraT >= 0 ? Math.min(1.4, (t - celebraT) * 2) : 0);
+      const mx = masc.pos.x, mz = masc.pos.z, carga = SZ * (1 - 30 / 512) + 6.6 * .26 / 2 + masc.bob;
+      if (tiro > 0 && !est.lanzado) { est.lanzado = true; est.rot = est.rotObj = masCercano(est.rot, Math.PI); }
+      est.rot = lerp(est.rot, est.rotObj, .08);
+      jersey.position.set(lerp(mx, 0, e), lerp(carga, yb, e) + Math.sin(tiro * Math.PI) * 3.2, lerp(mz, 0, e));
+      jersey.scale.setScalar(lerp(.26, 1, e) * (celebraT >= 0 ? 1 + Math.max(0, .12 * Math.sin(Math.min(Math.PI, (t - celebraT) * 3))) : 1));
+      jersey.rotation.y = tiro <= 0 ? Math.PI + Math.sin(masc.fase) * .1 : est.rot + (1 - e) * Math.PI * 4 + (arrastre ? 0 : Math.sin(t * .55) * .22 * e);
+      jersey.rotation.z = tiro <= 0 ? Math.sin(masc.fase) * .05 : Math.sin(t * .8) * .04;
+      sombra.material.opacity = .55 * e * on;
+      sombra.scale.setScalar(1.1 - (jersey.position.y - 5.2) * .05);
+      ondea(mFrente, t, tiro <= 0 ? 1.6 : 1); ondea(mEspalda, t, tiro <= 0 ? 1.6 : 1);
+    }
+    else if (ti >= CAE || reduce || opts.saltar) {
       jersey.visible = true;
       est.caida = Math.min(1, est.caida + dt / 1.1);
       const c = reduce || opts.saltar ? 1 : est.caida, rebote = 1 + 2.70158 * Math.pow(c - 1, 3) + 1.70158 * Math.pow(c - 1, 2);
@@ -365,7 +470,13 @@ export function crearEstadio(canvas, opts = {}) {
     // cámara
     est.cx = lerp(est.cx, est.cxObj, .06); est.cy = lerp(est.cy, est.cyObj, .06);
     est.angulo = lerp(est.angulo, est.anguloObj, .035); est.radio = lerp(est.radio, est.radioObj, .04);
-    if (ti < DUR) {
+    if (MAS && ti < DUR) {
+      const m = masc.pos, b = ease(clamp((ti - 3.3) / 2.6, 0, 1));
+      const sigue = new THREE.Vector3(m.x * .6, 2.6, m.z + 8.5), mira = new THREE.Vector3(m.x, 2.6, m.z - 7);
+      vistaHero(t); camera.position.copy(sigue.lerp(camera.position.clone(), b));
+      camera.lookAt(mira.lerp(new THREE.Vector3(0, 5, 0), b));
+      const dentro = clamp((ti - 3.6) / 2.2, 0, 1); est.cxV = lerp(.5, est.cx, dentro); est.cyV = lerp(.5, est.cy, dentro);
+    } else if (ti < DUR) {
       const p = ease(clamp(ti / DUR, 0, 1)); camera.position.copy(ruta.getPointAt(p));
       const seg = p * (miradas.length - 1), i0 = Math.floor(seg), i1 = Math.min(miradas.length - 1, i0 + 1);
       const mira = miradas[i0].clone().lerp(miradas[i1], seg - i0);
@@ -379,11 +490,13 @@ export function crearEstadio(canvas, opts = {}) {
     if (!avisado && ti >= LISTO) { avisado = true; opts.alListo && opts.alListo(); }
     renderer.render(scene, camera);
   }
-  requestAnimationFrame(cuadro);
+  if (opts.manual) { let reloj = 0; ant = 0; window.__tcCuadro = (ms) => { reloj += ms; cuadro(reloj); }; }
+  else requestAnimationFrame(cuadro);
 
   return {
     saltar() { if (tIntro < DUR) { tIntro = DUR; torres.forEach(x => x.on = 1); est.caida = Math.max(est.caida, .6); } },
     enIntro() { return tIntro < LISTO; },
+    saluda() { saludoT = ahora; },
     datos(nombre, carrera) {
       const n = nombre != null ? nombre : datos.nombre, c = carrera != null ? carrera : datos.carrera;
       datos.nombre = n; datos.carrera = c; datos.numero = numero(n); repinta();
@@ -391,7 +504,7 @@ export function crearEstadio(canvas, opts = {}) {
     mostrar(ladoJ) { est.rotObj = masCercano(est.rot, ladoJ === 'espalda' ? Math.PI : 0); },
     paso(n) { const ang = [0, -.42, .36, -.3, .3, -.12, 0]; est.anguloObj = ang[n] || 0; },
     encuadre(cx, cy, radio) { est.cxObj = cx; est.cyObj = cy; if (radio) est.radioObj = radio; },
-    celebrar() { celebraT = performance.now() / 1000; est.rotObj = masCercano(est.rot, Math.PI) + Math.PI * 2; est.radioObj += 2.5; },
+    celebrar() { celebraT = ahora; est.rotObj = masCercano(est.rot, Math.PI) + Math.PI * 2; est.radioObj += 2.5; },
     destruir() { vivo = false; renderer.dispose(); }
   };
 }

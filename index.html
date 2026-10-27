@@ -308,7 +308,8 @@ let E = null;
 function fin() { body.classList.remove('intro'); }
 if (soporta3D()) {
   try {
-    E = crearEstadio($('estadio'), { reduce, saltar: false, alListo: fin });
+    const qs = new URLSearchParams(location.search);
+    E = crearEstadio($('estadio'), { reduce, saltar: false, alListo: fin, mascota: qs.has('wexpancito'), manual: qs.has('grabar') });
   } catch (e) { console.warn('3D no disponible', e); E = null; }
 }
 if (!E) { body.classList.add('sin3d'); fin(); }
