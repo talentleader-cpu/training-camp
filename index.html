@@ -314,7 +314,8 @@ if (soporta3D()) {
 }
 if (!E) { body.classList.add('sin3d'); fin(); }
 else if (reduce) setTimeout(fin, 300);
-$('saltar').onclick = () => { E && E.saltar(); fin(); };
+$('saltar').onclick = () => { E && E.saltar(); fin(); TC.evento('intro_saltada'); };
+TC.evento('portada_vista', { movil: innerWidth < 768, ref: (new URLSearchParams(location.search).get('utm_source') || document.referrer || '').slice(0, 120) });
 addEventListener('keydown', e => { if (e.key === 'Escape' && body.classList.contains('intro')) $('saltar').click(); });
 
 function encuadre() {
@@ -392,7 +393,7 @@ $('form').addEventListener('submit', e => {
   TC.registrar({ nombre: nombre.value.trim(), correo: $('correo').value.trim(), celular: $('cel').value.trim(), carrera: pos.value,
     estado: $('estado').value, ciudad: $('ciudad').value.trim(), liga: state.liga, ingles: state.eng,
     acepta_contacto: $('c2').checked, acepta_uso_ia: $('c3').checked, origen: fuente + (innerWidth < 768 ? '-movil' : '-web') })
-    .then(j => listo(j, true))
+    .then(j => { listo(j, true); TC.evento('ficha_creada', { carrera: j.carrera, liga: j.liga }); })
     .catch(() => { $('err').textContent = 'No se pudo guardar tu ficha. Revisa tu conexión e intenta de nuevo.'; $('err').hidden = false; sig.disabled = false; sig.textContent = 'Firmar mi ficha'; });
 });
 
@@ -446,6 +447,7 @@ $('login').addEventListener('submit', e => {
       TC.guardarJugadorLocal({ id: j.id, nombre: j.nombre, liga: j.liga, carrera: j.carrera, ciudad: j.ciudad, estado: j.estado, ingles: j.ingles, acepta_uso_ia: j.acepta_uso_ia, creado: j.creado });
       listo(j, false);
       if (E) E.celebrar();
+      TC.evento('ficha_login');
     })
     .catch(() => { b.disabled = false; b.textContent = 'Entrar'; err.textContent = 'No pudimos conectarnos. Revisa tu internet e intenta de nuevo.'; err.hidden = false; });
 });

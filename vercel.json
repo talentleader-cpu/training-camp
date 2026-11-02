@@ -16,6 +16,13 @@
     "api/cancha-turno.js": { "maxDuration": 60 },
     "api/cancha-evaluar.js": { "maxDuration": 60 },
     "api/cv-leer.js": { "maxDuration": 60 },
-    "api/voz.js": { "maxDuration": 30 }
-  }
+    "api/voz.js": { "maxDuration": 30 },
+    "api/orquestador.js": { "maxDuration": 300 }
+  },
+  "headers": [
+    { "source": "/panel/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
+  ],
+  "crons": [
+    { "path": "/api/orquestador", "schedule": "17 13 * * *" }
+  ]
 }

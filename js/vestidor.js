@@ -118,6 +118,7 @@
       cv: S.cv, vacante: S.vacante, idioma: S.lang, seccion: S.seccion, modo: S.modo || 'nuevo',
       perfil: { nombre: jugador.nombre, liga: jugador.liga, carrera: jugador.carrera, ciudad: jugador.ciudad, ingles: jugador.ingles }
     };
+    if (!S._evIni && S.messages.some(function (m) { return m.role === 'user'; })) { S._evIni = true; TC.evento('cv_iniciado', { modo: S.modo || 'nuevo', idioma: S.lang }); }
     return post('/api/cv-coach', payload).then(function (d) {
       prevBullets = new Set(allBullets(S.cv));
       S.messages.push({ role: 'assistant', content: d.mensaje || '…' });
@@ -125,7 +126,7 @@
       if (E.ORDEN.indexOf(d.seccion) >= 0) S.seccion = d.seccion;
       S.completo = !!d.completo; S.quick = arr(d.respuestas_rapidas);
       busy = false; save(); renderAll();
-      if (S.completo && !S._avisoCompleto) { S._avisoCompleto = true; save(); toast('Tu CV ya está listo para descargar.'); }
+      if (S.completo && !S._avisoCompleto) { S._avisoCompleto = true; save(); TC.evento('cv_completo', { modo: S.modo || 'nuevo', idioma: S.lang }); toast('Tu CV ya está listo para descargar.'); }
       if (S.completo) pretranslate();
     }).catch(function (e) { busy = false; S.error = e.message; renderLog(); renderSteps(); });
   }
@@ -235,7 +236,7 @@
         prevBullets = new Set(allBullets(cv));
         S.seccion = primeraIncompleta();
         busy = false; $('upBar').removeAttribute('aria-busy'); save(); renderAll();
-        toast('Ya leí tu CV. Tu coach te dirá cómo mejorarlo.');
+        toast('Ya leí tu CV. Tu coach te dirá cómo mejorarlo.'); TC.evento('cv_subido');
         call();
       }).catch(function (e) {
         busy = false; $('upBar').removeAttribute('aria-busy');
@@ -544,7 +545,7 @@
       });
     }
     doc.setProperties({ title: (lang === 'en' ? 'Resume ' : 'CV ') + clean(d.nombre || ''), creator: 'Training Camp · Wexpand' });
-    download(doc.output('blob'), fileBase(cv, lang) + '.pdf'); persist(cv, lang);
+    download(doc.output('blob'), fileBase(cv, lang) + '.pdf'); persist(cv, lang); TC.evento('cv_descargado', { formato: 'pdf', idioma: lang, ats: computeAts(cv).score });
   }
   function makeDocx(cv, lang) {
     if (!window.docx) { toast('Cargando… intenta en un segundo.'); return; }
@@ -575,7 +576,7 @@
       styles: { default: { document: { run: { font: 'Times New Roman', size: 22 } } } },
       sections: [{ properties: { page: { margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } }, children: kids }]
     });
-    X.Packer.toBlob(doc).then(function (blob) { download(blob, fileBase(cv, lang) + '.docx'); persist(cv, lang); });
+    X.Packer.toBlob(doc).then(function (blob) { download(blob, fileBase(cv, lang) + '.docx'); persist(cv, lang); TC.evento('cv_descargado', { formato: 'docx', idioma: lang, ats: computeAts(cv).score }); });
   }
   $('dlPdf').onclick = function () { withDoc(makePdf); };
   $('dlDocx').onclick = function () { withDoc(makeDocx); };
@@ -590,4 +591,5 @@
 
   function renderAll() { syncLang(); renderLog(); renderSteps(); renderVer(); renderCV(); renderAts(); syncLk(); renderUp(); }
   renderAll();
+  TC.evento('vestidor_abierto', { tiene_cv: !!(S && S.cv && allBullets(S.cv).length) });
 })();

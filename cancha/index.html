@@ -163,6 +163,14 @@ textarea.in{width:100%;min-height:130px;border-radius:16px;border:2px solid var(
 .boxscore b{display:block;font:400 36px/1 var(--display);color:var(--blue);font-variant-numeric:tabular-nums}
 .boxscore small{font:700 11px var(--body);letter-spacing:.06em;color:var(--ink-soft)}
 .sec-h{margin:30px 0 12px;font:400 36px/1 var(--display)}
+.nivel{display:inline-block;margin-bottom:8px;padding:4px 10px;border-radius:999px;color:var(--white);font:800 11px var(--body);letter-spacing:.06em;text-transform:uppercase}
+.estructura .bars{display:grid;gap:10px;background:var(--white);border-radius:20px;box-shadow:0 4px 0 var(--line);padding:16px 18px;margin-top:10px}
+.estructura .eb{display:grid;grid-template-columns:96px 1fr 48px;align-items:center;gap:12px}
+.estructura .eb b{font:700 14px var(--body)}
+.estructura .et{height:14px;border-radius:0 4px 4px 0;background:var(--mist);position:relative;overflow:hidden}
+.estructura .et i{position:absolute;inset:0 auto 0 0;background:var(--blue);border-radius:0 4px 4px 0}
+.estructura .et i.baja{background:var(--orange)}
+.estructura .ev{text-align:right;font:400 24px var(--display);color:var(--blue)}
 .sec-h span{color:var(--orange)}
 .comp{display:grid;gap:12px}
 .comp article{background:var(--white);border-radius:20px;box-shadow:0 4px 0 var(--line);padding:16px 18px;display:grid;gap:8px}
@@ -338,7 +346,7 @@ details.trans b{font-weight:800}
 <main class="wrap" id="vRes" hidden>
   <div class="hero" style="margin-bottom:16px"><div><h1>Resumen del <span>partido</span></h1><p id="resMeta"></p></div></div>
   <div class="res-hero">
-    <div class="scorecard"><div class="n" id="rScore">0<small>/100</small></div><div><h2 id="rVer"></h2><p id="rSum"></p></div><img src="/assets/wx-basquetbol.png" alt=""></div>
+    <div class="scorecard"><div class="n" id="rScore">0<small>/100</small></div><div><span class="nivel" id="rNivel"></span><h2 id="rVer"></h2><p id="rSum"></p></div><img src="/assets/wx-basquetbol.png" alt=""></div>
     <div class="boxscore">
       <div><b id="bDur">0</b><small>MINUTOS JUGADOS</small></div>
       <div><b id="bResp">0</b><small>RESPUESTAS</small></div>
@@ -346,6 +354,7 @@ details.trans b{font-weight:800}
       <div><b id="bStar">–</b><small>RESPUESTAS CON RESULTADO</small></div>
     </div>
   </div>
+  <section class="estructura" id="rStar" hidden><h2 class="sec-h">Tu estructura <span>STAR</span></h2><p class="hint">De tus respuestas, qué porcentaje incluyó cada parte de la historia. El resultado es lo que más recuerda quien te entrevista.</p><div class="bars"></div></section>
   <div id="rIngles"></div>
   <h2 class="sec-h">Stats por <span>competencia</span></h2>
   <div class="comp" id="rComp"></div>

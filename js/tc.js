@@ -33,8 +33,26 @@
     });
   }
 
+  function sesion() {
+    var s = null;
+    try { s = sessionStorage.getItem('tc_sesion'); if (!s) { s = uuid(); sessionStorage.setItem('tc_sesion', s); } } catch (e) { s = w.__tcSesion = w.__tcSesion || uuid(); }
+    return s;
+  }
+  function evento(tipo, datos) {
+    try {
+      var j = get('tc_jugador');
+      return fetch(CFG.supabaseUrl + '/rest/v1/tc_eventos', {
+        method: 'POST', keepalive: true,
+        headers: { 'apikey': CFG.supabaseKey, 'Authorization': 'Bearer ' + CFG.supabaseKey, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify({ jugador_id: j && j.id ? j.id : null, sesion: sesion(), tipo: tipo, pagina: String(location.pathname).slice(0, 200), datos: datos || null })
+      }).catch(function () {});
+    } catch (e) { return Promise.resolve(); }
+  }
+
   w.TC = {
     cfg: CFG,
+    evento: evento,
+    sesion: sesion,
     uuid: uuid,
     jugador: function () { return get('tc_jugador'); },
     guardarJugadorLocal: function (j) { set('tc_jugador', j); },

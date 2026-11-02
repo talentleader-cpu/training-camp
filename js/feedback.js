@@ -151,6 +151,7 @@
   function abrir() {
     if (!S.msgs.length) { var n = nombre(); bot('¡Hola' + (n ? ', ' + n : '') + '! Estamos en prueba piloto y tu opinión nos ayuda muchísimo. ¿Qué nos quieres contar?'); saveS(); }
     box.hidden = false; tab.hidden = true; render();
+    if (window.TC && TC.evento) TC.evento('feedback_abierto');
     var f = chips.querySelector('button') || ta; if (f) f.focus();
   }
   function cerrar() { box.hidden = true; tab.hidden = false; tab.focus(); }

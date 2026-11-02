@@ -251,6 +251,7 @@
     G = { coach: P.coach, idioma: idioma, dur: P.dur, cv: getCV(), vacante: str(P.vacante), plan: null, historial: [], analyses: [],
       t0: 0, forceNext: false, ended: false, preguntas: 0, state: 'idle', fails: 0, m: { words: 0, speakSec: 0, fillers: 0, respuestas: 0 }, saved: false };
     voice = pickVoice(idioma);
+    TC.evento('entrevista_iniciada', { duracion_min: P.dur, coach: P.coach, idioma: idioma, cv_fuente: P.src, con_vacante: str(P.vacante).length > 20 });
     fetch('/api/voz').then(function (r) { return r.json(); }).then(function (d) { nube = d && d.voz && d.voz !== 'navegador'; }).catch(function () {});
     $('coachImg').src = '/assets/' + COACH[G.coach].img + '.png';
     $('boardTitle').textContent = (G.vacante.split('\n')[0] || 'Coach ' + COACH[G.coach].n).replace(/[—–-].*$/, '').trim().slice(0, 40) || 'Entrevista';
@@ -396,6 +397,7 @@
     if (G.ended) return;
     stopAll();
     G.duracion = Math.round(elapsed());
+    TC.evento('entrevista_terminada', { duracion_min: G.dur, duracion_real_seg: G.duracion, respuestas: G.m.respuestas, por_tiempo: remaining() <= 0, coach: G.coach });
     if (!G.historial.some(function (t) { return t.rol === 'jugador' && words(t.texto) > 0 && !/^\(no se escuchó/.test(t.texto); })) {
       show('vPrevia'); toast('No hubo respuestas que analizar. ¡Vuelve a intentarlo cuando quieras!'); return;
     }
@@ -405,7 +407,8 @@
   /* =================== ANÁLISIS =================== */
   function metricas() {
     return { duracion_seg: G.duracion, respuestas: G.m.respuestas, ppm: G.m.speakSec > 5 ? Math.round(G.m.words / (G.m.speakSec / 60)) : 0, muletillas: G.m.fillers,
-      resultado_pct: G.analyses.length ? Math.round(100 * G.analyses.filter(function (a) { return a.resultado; }).length / G.analyses.length) : null };
+      resultado_pct: G.analyses.length ? Math.round(100 * G.analyses.filter(function (a) { return a.resultado; }).length / G.analyses.length) : null,
+      star: G.analyses.length ? ['situacion', 'tarea', 'accion', 'resultado'].reduce(function (o, k) { o[k] = Math.round(100 * G.analyses.filter(function (a) { return a[k]; }).length / G.analyses.length); return o; }, {}) : null };
   }
   function evaluate() {
     show('vAnal'); $('analErr').hidden = true; $('analTitle').textContent = 'Revisando la repetición…';
@@ -415,6 +418,7 @@
       var res = { fecha: new Date().toISOString(), coach: G.coach, idioma: G.idioma, dur: G.dur, vacante: G.vacante, historial: G.historial, metricas: m, evaluacion: d.evaluacion };
       TC.store.set(LKEY, res);
       persist(d.evaluacion, m);
+      TC.evento('entrevista_evaluada', { puntaje: d.evaluacion && d.evaluacion.puntaje, coach: G.coach, idioma: G.idioma });
       renderRes(res);
       try { history.replaceState(null, '', '#resumen'); } catch (e) {}
     }).catch(function (e) {
@@ -438,10 +442,16 @@
   var LAST = null;
   function renderRes(r) {
     LAST = r; var ev = r.evaluacion || {}, m = r.metricas || {};
+    TC.evento('reporte_visto', { puntaje: ev.puntaje });
     show('vRes');
     $('resMeta').textContent = 'Coach ' + (COACH[r.coach] || COACH.rh).n + ' · ' + (r.idioma === 'en' ? 'en inglés' : 'en español') + ' · ' + new Date(r.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long' });
     $('rScore').firstChild.nodeValue = String(ev.puntaje || 0);
     $('rVer').textContent = ev.veredicto || ''; $('rSum').textContent = ev.resumen || '';
+    var nv = nivelDe(ev.puntaje); $('rNivel').textContent = nv.t; $('rNivel').style.background = 'rgb(' + nv.c.join(',') + ')';
+    var stx = $('rStar'), sd = m.star; stx.hidden = !sd; stx.querySelector('.bars').textContent = '';
+    if (sd) [['Situación', sd.situacion], ['Tarea', sd.tarea], ['Acción', sd.accion], ['Resultado', sd.resultado]].forEach(function (p) {
+      var f = el('div', 'eb'); f.appendChild(el('b', null, p[0])); var t = el('span', 'et'), i = el('i'); i.style.width = (p[1] || 0) + '%'; if (p[1] < 50) i.className = 'baja'; t.appendChild(i); f.appendChild(t); f.appendChild(el('span', 'ev', (p[1] == null ? '–' : p[1] + '%'))); stx.querySelector('.bars').appendChild(f);
+    });
     $('bDur').textContent = Math.max(1, Math.round((m.duracion_seg || 0) / 60));
     $('bResp').textContent = m.respuestas || 0; $('bPpm').textContent = m.ppm || '–';
     $('bStar').textContent = m.resultado_pct == null ? '–' : m.resultado_pct + '%';
@@ -476,34 +486,184 @@
 
   var WIN = '–—‘’“”•…€™¡¿';
   function clean(s) { return Array.from(String(s || '')).filter(function (ch) { var c = ch.codePointAt(0); return (c >= 32 && c <= 255) || WIN.indexOf(ch) >= 0; }).join('').trim(); }
+  /* ---------- reporte en PDF ---------- */
+  var LOGO = null;
+  (function precargaLogo() {
+    var im = new Image(); im.onload = function () { try { var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); LOGO = { url: c.toDataURL('image/png'), r: im.naturalHeight / im.naturalWidth }; } catch (e) {} };
+    im.src = '/assets/wexpand-logo-blanco.png';
+  })();
+  function nivelDe(p) {
+    p = p || 0;
+    if (p >= 85) return { t: 'Nivel selección', c: [31, 138, 91] };
+    if (p >= 70) return { t: 'Listo para competir', c: [0, 160, 193] };
+    if (p >= 50) return { t: 'En desarrollo', c: [247, 167, 0] };
+    return { t: 'En calentamiento', c: [240, 126, 46] };
+  }
   $('dlRes').onclick = function () {
     if (!LAST || !window.jspdf) { toast('Cargando… intenta en un segundo.'); return; }
     var ev = LAST.evaluacion || {}, m = LAST.metricas || {};
-    var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' }), M = 54, W = 612 - M * 2, y = M, B = 792 - M;
-    function need(h) { if (y + h > B) { doc.addPage(); y = M; } }
-    function para(t, size, style, color) {
-      doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor.apply(doc, color || [29, 29, 27]);
-      doc.splitTextToSize(clean(t), W).forEach(function (l) { need(14); doc.text(l, M, y); y += (size || 10.5) * 1.35; });
+    var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
+    var PW = 612, PH = 792, M = 46, W = PW - M * 2, y = 0, B = PH - 56;
+    var C = { noche: [0, 39, 63], prof: [0, 65, 94], azul: [6, 83, 161], cielo: [150, 212, 231], cian: [0, 160, 193], naranja: [240, 126, 46], ambar: [247, 167, 0], tinta: [20, 42, 56], suave: [85, 112, 127], linea: [220, 232, 238], niebla: [242, 247, 250], blanco: [255, 255, 255] };
+    function color(t, c) { if (t === 'f') doc.setFillColor(c[0], c[1], c[2]); else if (t === 'd') doc.setDrawColor(c[0], c[1], c[2]); else doc.setTextColor(c[0], c[1], c[2]); }
+    function fuente(size, style, c) { doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size); color('t', c || C.tinta); }
+    function lineas(t, w, size, style) { doc.setFont('helvetica', style || 'normal'); doc.setFontSize(size); return doc.splitTextToSize(clean(t), w); }
+    function alto(t, w, size, style, lh) { return lineas(t, w, size, style).length * size * (lh || 1.4); }
+    function texto(t, x, w, size, style, c, lh) { var ls = lineas(t, w, size, style); fuente(size, style, c); ls.forEach(function (l) { doc.text(l, x, y + size); y += size * (lh || 1.4); }); }
+    function pagina() { doc.addPage(); y = M; }
+    function cabe(h) { if (y + h > B) pagina(); }
+    function seccion(t, sub) {
+      cabe(60); y += 14;
+      fuente(15, 'bold', C.prof); doc.text(clean(t), M, y + 14);
+      color('f', C.naranja); doc.rect(M, y + 20, 34, 3, 'F');
+      y += 30; if (sub) { texto(sub, M, W, 9, 'normal', C.suave); y += 4; }
     }
-    function head(t) { y += 10; need(30); doc.setFillColor(6, 83, 161); doc.rect(M, y - 12, W, 18, 'F'); doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.text(clean(t).toUpperCase(), M + 6, y + 1); y += 20; }
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor(0, 65, 94); doc.text('La Cancha · Resumen del partido', M, y); y += 24;
-    para((jugador.nombre ? jugador.nombre + ' · ' : '') + $('resMeta').textContent, 10, 'normal', [53, 94, 114]);
-    y += 6; para('Puntaje: ' + (ev.puntaje || 0) + '/100 · ' + (ev.veredicto || ''), 14, 'bold', [240, 126, 46]);
-    para(ev.resumen || '');
-    para('Duración: ' + Math.max(1, Math.round((m.duracion_seg || 0) / 60)) + ' min · Respuestas: ' + (m.respuestas || 0) + ' · Palabras por minuto: ' + (m.ppm || '-') + ' · Muletillas aprox.: ' + (m.muletillas || 0), 9.5, 'normal', [53, 94, 114]);
-    if (ev.ingles) { head('Tu inglés'); para('Nivel estimado: ' + (ev.ingles.nivel_estimado || '-'), 10.5, 'bold'); para(ev.ingles.comentario || ''); }
-    head('Competencias');
-    arr(ev.competencias).forEach(function (x) { para(x.nombre + ': ' + (x.nivel || 0) + '/5', 10.5, 'bold'); if (str(x.evidencia)) para('"' + x.evidencia + '"', 9.5, 'italic', [53, 94, 114]); para(x.comentario || ''); y += 4; });
-    head('Lo que te salió bien'); arr(ev.fortalezas).forEach(function (x) { para(x.titulo, 10.5, 'bold'); para(x.detalle); y += 4; });
-    head('Lo que hay que entrenar'); arr(ev.mejoras).forEach(function (x) { para(x.titulo, 10.5, 'bold'); para(x.detalle); if (x.como) para('Prueba: ' + x.como, 10.5, 'normal', [6, 83, 161]); y += 4; });
-    var j = ev.jugada_clave || {}; head('La jugada clave'); para(j.pregunta || '', 10.5, 'bold'); para(j.que_paso || ''); y += 2; para('Cómo pudo sonar:', 10.5, 'bold'); para(j.respuesta_mejorada || '', 10.5, 'italic');
-    head('Tu plan de entrenamiento'); arr(ev.plan_entrenamiento).forEach(function (x, n) { para((n + 1) + '. ' + x.ejercicio, 10.5, 'bold'); para(x.por_que); y += 4; });
-    y += 10; para('Training Camp · Wexpand · Este análisis lo genera una IA a partir de la transcripción de tu práctica.', 8.5, 'normal', [120, 140, 150]);
+    function tarjeta(x, w, h, fondo, borde) { color('f', fondo || C.blanco); if (borde) { color('d', borde); doc.setLineWidth(.8); doc.roundedRect(x, y, w, h, 8, 8, 'FD'); } else doc.roundedRect(x, y, w, h, 8, 8, 'F'); }
+    function arco(cx, cy, r, desde, hasta, grosor, c) {
+      color('d', c); doc.setLineWidth(grosor); doc.setLineCap('round');
+      var pasos = Math.max(2, Math.ceil((hasta - desde) / 0.05)), pts = [];
+      for (var i = 0; i <= pasos; i++) { var a = desde + (hasta - desde) * i / pasos; pts.push([cx + r * Math.cos(a), cy + r * Math.sin(a)]); }
+      for (var k = 1; k < pts.length; k++) doc.line(pts[k - 1][0], pts[k - 1][1], pts[k][0], pts[k][1]);
+      doc.setLineCap('butt');
+    }
+
+    /* ---- portada: banda superior ---- */
+    var puntaje = Math.max(0, Math.min(100, ev.puntaje || 0)), nv = nivelDe(puntaje);
+    color('f', C.noche); doc.rect(0, 0, PW, 176, 'F');
+    color('f', C.azul); doc.rect(0, 176, PW, 4, 'F');
+    if (LOGO) doc.addImage(LOGO.url, 'PNG', M, 30, 92, 92 * LOGO.r);
+    fuente(8.5, 'bold', C.ambar); doc.text('TRAINING CAMP  |  LA CANCHA', PW - M, 44, { align: 'right' });
+    fuente(26, 'bold', C.blanco); doc.text('Reporte de tu entrevista', M, 98);
+    var vac = clean(String(LAST.vacante || '').split('\n')[0]).slice(0, 80);
+    fuente(10.5, 'normal', C.cielo);
+    doc.text(clean((jugador.nombre ? jugador.nombre + '   |   ' : '') + 'Coach ' + (COACH[LAST.coach] || COACH.rh).n + '   |   ' + (LAST.idioma === 'en' ? 'En inglés' : 'En español') + '   |   ' + new Date(LAST.fecha).toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })), M, 122);
+    if (vac) { fuente(10.5, 'bold', C.blanco); doc.text('Vacante: ' + vac, M, 142); }
+
+    /* ---- marcador ---- */
+    y = 200;
+    var resumenH = alto(ev.resumen || '', W - 190, 10, 'normal', 1.45) + alto(ev.veredicto || '', W - 190, 15, 'bold', 1.2);
+    var hCard = Math.max(150, 62 + resumenH);
+    tarjeta(M, W, hCard, C.blanco, C.linea);
+    var cx = M + 82, cy = y + hCard / 2, r = 50;
+    arco(cx, cy, r, 0, Math.PI * 2, 11, C.linea);
+    if (puntaje > 0) arco(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * puntaje / 100, 11, nv.c);
+    fuente(34, 'bold', C.prof); doc.text(String(puntaje), cx, cy + 8, { align: 'center' });
+    fuente(8.5, 'bold', C.suave); doc.text('DE 100', cx, cy + 22, { align: 'center' });
+    var tx = M + 168, tw = W - 190, y0 = y; y = y0 + 22;
+    color('f', nv.c); doc.roundedRect(tx, y, doc.getTextWidth(nv.t.toUpperCase()) * 1.12 + 22, 18, 9, 9, 'F');
+    fuente(8.5, 'bold', C.blanco); doc.text(nv.t.toUpperCase(), tx + 11, y + 12.4);
+    y += 28; texto(ev.veredicto || '', tx, tw, 15, 'bold', C.noche, 1.2); y += 4;
+    texto(ev.resumen || '', tx, tw, 10, 'normal', C.tinta, 1.45);
+    y = y0 + hCard + 14;
+
+    /* ---- estadísticas ---- */
+    var stats = [[String(Math.max(1, Math.round((m.duracion_seg || 0) / 60))), 'minutos jugados'], [String(m.respuestas || 0), 'respuestas'], [String(m.ppm || '-'), 'palabras por minuto'], [m.resultado_pct == null ? '-' : m.resultado_pct + '%', 'respuestas con resultado']];
+    var sw = (W - 3 * 10) / 4;
+    stats.forEach(function (s, i) {
+      var x = M + i * (sw + 10); color('f', C.niebla); doc.roundedRect(x, y, sw, 58, 8, 8, 'F');
+      fuente(22, 'bold', C.azul); doc.text(s[0], x + 12, y + 28);
+      fuente(8.5, 'normal', C.suave); doc.text(s[1], x + 12, y + 45);
+    });
+    y += 72;
+
+    /* ---- estructura STAR ---- */
+    var st = m.star;
+    if (st) {
+      seccion('Tu estructura STAR', 'De tus respuestas, qué porcentaje incluyó cada parte de la historia.');
+      [['Situación', st.situacion], ['Tarea', st.tarea], ['Acción', st.accion], ['Resultado', st.resultado]].forEach(function (p) {
+        cabe(22); fuente(10, 'bold', C.tinta); doc.text(p[0], M, y + 11);
+        var bx = M + 92, bw = W - 92 - 48; color('f', C.linea); doc.roundedRect(bx, y + 3, bw, 10, 3, 3, 'F');
+        if (p[1]) { color('f', p[1] < 50 ? C.naranja : C.azul); doc.roundedRect(bx, y + 3, Math.max(6, bw * p[1] / 100), 10, 3, 3, 'F'); }
+        fuente(10, 'bold', C.tinta); doc.text((p[1] == null ? '-' : p[1] + '%'), PW - M, y + 11, { align: 'right' });
+        y += 20;
+      });
+    }
+
+    /* ---- competencias ---- */
+    seccion('Tus competencias', 'Nivel del 1 al 5: 1 sin evidencia, 3 ejemplo real incompleto, 5 ejemplo completo con resultado medible.');
+    arr(ev.competencias).forEach(function (x) {
+      var nivel = Math.max(0, Math.min(5, x.nivel || 0)), ew = W - 24;
+      var h = 30 + (str(x.evidencia) ? alto('"' + x.evidencia + '"', ew, 9.5, 'italic') + 4 : 0) + alto(x.comentario || '', ew, 10, 'normal') + 10;
+      cabe(h + 8); tarjeta(M, W, h, C.blanco, C.linea);
+      var y0 = y; y += 12;
+      fuente(11, 'bold', C.noche); doc.text(clean(x.nombre), M + 12, y + 9);
+      for (var i = 0; i < 5; i++) { color('f', i < nivel ? C.azul : C.linea); doc.roundedRect(PW - M - 12 - 5 * 22 - 34 + i * 22, y + 1, 18, 9, 3, 3, 'F'); }
+      fuente(11, 'bold', C.azul); doc.text(nivel + '/5', PW - M - 12, y + 9.5, { align: 'right' });
+      y += 20;
+      if (str(x.evidencia)) { texto('"' + x.evidencia + '"', M + 12, ew, 9.5, 'italic', C.suave); y += 4; }
+      texto(x.comentario || '', M + 12, ew, 10, 'normal', C.tinta);
+      y = y0 + h + 8;
+    });
+
+    /* ---- fortalezas y mejoras ---- */
+    function bloques(titulo, items, acento, conComo) {
+      seccion(titulo);
+      items.forEach(function (x) {
+        var ew = W - 30, h = 16 + alto(x.titulo, ew, 11, 'bold') + alto(x.detalle || '', ew, 10) + (conComo && x.como ? alto('Prueba: ' + x.como, ew, 10, 'bold') + 6 : 0) + 8;
+        cabe(h + 8); tarjeta(M, W, h, C.blanco, C.linea); color('f', acento); doc.roundedRect(M, y, 6, h, 3, 3, 'F');
+        var y0 = y; y += 10; texto(x.titulo, M + 20, ew, 11, 'bold', C.noche); y += 2; texto(x.detalle || '', M + 20, ew, 10, 'normal', C.tinta);
+        if (conComo && x.como) { y += 4; texto('Prueba: ' + x.como, M + 20, ew, 10, 'bold', C.azul); }
+        y = y0 + h + 8;
+      });
+    }
+    bloques('Lo que te salió bien', arr(ev.fortalezas), C.cian);
+    bloques('Lo que hay que entrenar', arr(ev.mejoras), C.naranja, true);
+
+    /* ---- jugada clave ---- */
+    var j = ev.jugada_clave || {};
+    if (j.pregunta) {
+      seccion('La jugada clave', 'La respuesta con más margen de mejora, y cómo pudo sonar usando solo lo que tú dijiste.');
+      var iw = W - 36, hr = alto(j.respuesta_mejorada || '', iw - 24, 10, 'normal', 1.5) + 34;
+      var h = 24 + alto(j.pregunta, iw, 12.5, 'bold', 1.25) + 18 + alto(j.que_paso || '', iw, 10) + 14 + hr + 16;
+      cabe(h + 8); color('f', C.noche); doc.roundedRect(M, y, W, h, 10, 10, 'F');
+      var y0 = y; y += 16;
+      fuente(8, 'bold', C.cielo); doc.text('LA PREGUNTA', M + 18, y + 6); y += 12;
+      texto(j.pregunta, M + 18, iw, 12.5, 'bold', C.blanco, 1.25); y += 8;
+      fuente(8, 'bold', C.cielo); doc.text('QUÉ PASÓ', M + 18, y + 6); y += 12;
+      texto(j.que_paso || '', M + 18, iw, 10, 'normal', C.blanco); y += 10;
+      color('f', C.blanco); doc.roundedRect(M + 18, y, iw, hr, 8, 8, 'F');
+      y += 12; fuente(8, 'bold', C.naranja); doc.text('CÓMO PUDO SONAR', M + 30, y + 6); y += 14;
+      texto(j.respuesta_mejorada || '', M + 30, iw - 24, 10, 'normal', C.tinta, 1.5);
+      y = y0 + h + 8;
+    }
+
+    /* ---- inglés ---- */
+    if (ev.ingles && (ev.ingles.nivel_estimado || ev.ingles.comentario)) {
+      seccion('Tu inglés en esta entrevista');
+      var hI = 30 + alto(ev.ingles.comentario || '', W - 24, 10); cabe(hI + 8); tarjeta(M, W, hI, C.niebla); var yI = y; y += 12;
+      fuente(11, 'bold', C.azul); doc.text('Nivel estimado: ' + clean(ev.ingles.nivel_estimado || '-'), M + 12, y + 9); y += 18;
+      texto(ev.ingles.comentario || '', M + 12, W - 24, 10, 'normal', C.tinta); y = yI + hI + 8;
+    }
+
+    /* ---- plan ---- */
+    seccion('Tu plan de entrenamiento', 'Tres ejercicios para tu siguiente partido.');
+    arr(ev.plan_entrenamiento).forEach(function (x, i) {
+      var ew = W - 52, h = Math.max(36, 10 + alto(x.ejercicio, ew, 11, 'bold') + alto(x.por_que || '', ew, 10) + 8);
+      cabe(h + 6); var y0 = y;
+      color('f', C.naranja); doc.circle(M + 14, y + 14, 13, 'F'); fuente(12, 'bold', C.blanco); doc.text(String(i + 1), M + 14, y + 18.5, { align: 'center' });
+      y += 4; texto(x.ejercicio, M + 40, ew, 11, 'bold', C.noche); texto(x.por_que || '', M + 40, ew, 10, 'normal', C.tinta);
+      y = y0 + h + 6;
+    });
+    if (y + 66 <= B) { y += 12; color('f', C.niebla); doc.roundedRect(M, y, W, 50, 8, 8, 'F');
+    fuente(11, 'bold', C.prof); doc.text('Vuelve a la cancha cuando quieras: camp.wexpandmx.com', M + 14, y + 21);
+    fuente(9, 'normal', C.suave); doc.text('Cada entrevista que practicas te deja mejor preparado para la real.', M + 14, y + 37); }
+
+    /* ---- pie de página ---- */
+    var total = doc.getNumberOfPages();
+    for (var p = 1; p <= total; p++) {
+      doc.setPage(p); color('d', C.linea); doc.setLineWidth(.6); doc.line(M, PH - 36, PW - M, PH - 36);
+      fuente(7.5, 'normal', C.suave); doc.text('Training Camp  |  Wexpand. Análisis generado con IA a partir de la transcripción de tu práctica.', M, PH - 22);
+      doc.text(p + ' / ' + total, PW - M, PH - 22, { align: 'right' });
+    }
+    doc.setProperties({ title: 'Reporte de entrevista · Training Camp', creator: 'Training Camp · Wexpand' });
+    var nom = String(jugador.nombre || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
     var blob = doc.output('blob'), u = URL.createObjectURL(blob), a = document.createElement('a');
-    a.href = u; a.download = 'Analisis_La_Cancha.pdf'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 1500);
+    a.href = u; a.download = 'Reporte_Entrevista' + (nom ? '_' + nom : '') + '.pdf'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 1500);
+    TC.evento('reporte_descargado', { puntaje: ev.puntaje, coach: LAST.coach });
   };
 
   // volver a ver el último resumen
   var last = TC.store.get(LKEY);
   if (location.hash === '#resumen' && last && last.evaluacion) renderRes(last);
+  TC.evento('cancha_abierta', { desde_vestidor: /[?&]desde=vestidor/.test(location.search) });
 })();
