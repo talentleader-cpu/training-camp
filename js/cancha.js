@@ -298,6 +298,7 @@
     });
   }
 
+  var PAUSA_MS = 9000; // silencio antes de enviar la respuesta sola
   function listen() {
     G.ans = { final: '', interim: '', firstAt: 0, lastAt: 0, startAt: Date.now(), span: addLog('jugador', '…', true), stopping: false };
     setState('listen', G.idioma === 'en' ? 'Te escucho… responde en inglés.' : 'Te escucho…');
@@ -305,8 +306,11 @@
     clearInterval(silenceT);
     silenceT = setInterval(function () {
       if (G.state !== 'listen' || !G.ans) return;
-      var now = Date.now(), w = words(G.ans.final + ' ' + G.ans.interim);
-      if (w >= 6 && G.ans.lastAt && now - G.ans.lastAt > 4500) finishAnswer();
+      var now = Date.now(), w = words(G.ans.final + ' ' + G.ans.interim), quieto = G.ans.lastAt ? now - G.ans.lastAt : 0;
+      // solo se envía sola tras una pausa larga, y nunca mientras el navegador sigue transcribiendo
+      if (w >= 6 && quieto > PAUSA_MS && (!G.ans.interim || quieto > PAUSA_MS + 6000)) finishAnswer();
+      else if (w >= 6 && quieto > PAUSA_MS - 3500) $('qStateTxt').textContent = G.idioma === 'en' ? 'Take your time. If you are done, tap I\'m done.' : 'Tómate tu tiempo. Si ya terminaste, toca Terminé.';
+      else if (w && quieto < 1500) $('qStateTxt').textContent = G.idioma === 'en' ? 'Te escucho… responde en inglés.' : 'Te escucho…';
       else if (!w && now - G.ans.startAt > 25000) $('qStateTxt').textContent = 'No te escucho. Revisa tu micrófono o toca Repetir pregunta.';
     }, 400);
   }
@@ -332,10 +336,13 @@
       rec.onend = function () {
         if (rec !== r) return; // es un micrófono anterior que ya se reemplazó
         rec = null;
+        // el navegador puede cortar a media frase: lo que iba escuchando se guarda antes de reabrir el micrófono
+        if (G.ans && G.ans.interim) { G.ans.final = (G.ans.final + ' ' + G.ans.interim).trim(); G.ans.interim = ''; }
         if (G.ans && G.ans.stopping) { G.ans.onStopped && G.ans.onStopped(); return; }
-        if (G.state === 'listen' && !G.micBlocked && !G.ended) setTimeout(function () { if (G.state === 'listen' && !rec) startRec(); }, 250); // el navegador cortó: seguimos escuchando
+        if (G.state === 'listen' && !G.micBlocked && !G.ended) setTimeout(function () { if (G.state === 'listen' && !rec) startRec(); }, 60); // el navegador cortó: seguimos escuchando
       };
       rec.start();
+      if (G.ans) G.ans.reinicios = (G.ans.reinicios || 0) + 1;
     } catch (e) { rec = null; }
   }
   function finishAnswer() {
