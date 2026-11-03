@@ -102,6 +102,22 @@ td textarea{min-height:56px;resize:vertical}
 
 @media (max-width:980px){ .g4{grid-template-columns:repeat(2,1fr)} .g2,.g3,.lista-inf{grid-template-columns:1fr} .embudo .paso{grid-template-columns:120px 1fr 80px} main{padding:16px} }
 @media (max-width:560px){ .g4{grid-template-columns:1fr 1fr} .top{padding:10px 16px;flex-wrap:wrap} .top .t{display:none} .top select{flex:1 1 100%;order:5} .embudo .paso{grid-template-columns:96px minmax(0,1fr) 70px;gap:8px} .barras .f{grid-template-columns:minmax(0,120px) minmax(0,1fr) 40px} .kpi b{font-size:34px} }
+tr.fila{cursor:pointer} tr.fila:hover td{background:#F6FAFC}
+.velo{position:fixed;inset:0;background:rgba(0,25,40,.45);z-index:30}
+.cajon{position:fixed;top:0;right:0;bottom:0;width:min(760px,100vw);background:var(--fondo);z-index:31;display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.25)}
+.cajon>header{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:18px 22px;background:#fff;border-bottom:1px solid var(--linea)}
+.cajon .cuerpo{flex:1;overflow:auto;padding:18px 22px 40px}
+.cajon h3{margin:20px 0 8px}
+.chat{display:flex;flex-direction:column;gap:10px}
+.turno{max-width:86%;padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;white-space:pre-wrap}
+.turno small{display:block;font:700 10.5px var(--body);letter-spacing:.04em;margin-bottom:3px;opacity:.75}
+.turno.coach{background:#fff;border:1px solid var(--linea);align-self:flex-start}
+.turno.jug{background:var(--prof);color:#fff;align-self:flex-end}
+.comp{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:8px 0;border-bottom:1px solid var(--linea);font-size:13px}
+.comp q{grid-column:1/-1;color:var(--suave);font-style:italic}
+.comp p{grid-column:1/-1;margin:0;color:var(--suave)}
+details.vac summary{cursor:pointer;font-weight:700}
+details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-top:8px}
 </style>
 </head>
 <body>
@@ -132,7 +148,7 @@ td textarea{min-height:56px;resize:vertical}
     <button role="tab" data-t="comentarios" aria-selected="false">Comentarios del chat</button>
     <button role="tab" data-t="informes" aria-selected="false">Informes</button>
     <button role="tab" data-t="skills" aria-selected="false">Skills</button>
-    <button role="tab" data-t="entrevistas" aria-selected="false">Entrevistas</button>
+    <button role="tab" data-t="entrevistas" aria-selected="false">Entrevistas y transcripciones</button>
     <button role="tab" data-t="agentes" aria-selected="false">Agentes</button>
   </nav>
   <main>
@@ -189,9 +205,15 @@ td textarea{min-height:56px;resize:vertical}
     </section>
 
     <section data-s="entrevistas" hidden>
-      <h2>Entrevistas</h2>
-      <p class="sub">Las últimas 100 del periodo, con el puesto y seniority que detectó el agente de skills.</p>
-      <div class="card" style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Coach</th><th>Idioma</th><th>Eligió</th><th>Duró</th><th>Puntaje</th><th>Puesto</th><th>Seniority</th><th>Veredicto</th></tr></thead><tbody id="entRows"></tbody></table></div>
+      <h2>Entrevistas y transcripciones</h2>
+      <p class="sub">Cada entrevista terminada del periodo con su transcripción completa. Toca una fila para leerla junto con su evaluación y las skills que detectó el agente.</p>
+      <div class="filtros">
+        <input id="entBuscar" type="search" placeholder="Buscar por persona, puesto o palabra de la transcripción" style="flex:1 1 320px;min-height:36px;border:1px solid var(--linea);border-radius:10px;padding:0 12px;font-size:13px">
+        <button class="btn sec" type="button" id="dlTxt">Descargar todas (texto)</button>
+        <button class="btn sec" type="button" id="dlJson">Descargar todas (JSON)</button>
+        <span class="estado" id="dlEstado"></span>
+      </div>
+      <div class="card" style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Persona</th><th>Coach</th><th>Eligió</th><th>Duró</th><th>Turnos</th><th>Puntaje</th><th>Puesto</th><th>Veredicto</th><th></th></tr></thead><tbody id="entRows"></tbody></table></div>
     </section>
 
     <section data-s="agentes" hidden>
@@ -203,6 +225,12 @@ td textarea{min-height:56px;resize:vertical}
   </main>
 </div>
 <div id="tip" hidden></div>
+<div class="velo" id="velo" hidden></div>
+<aside class="cajon" id="cajon" role="dialog" aria-modal="true" aria-labelledby="cjT" hidden>
+  <header><div><h2 id="cjT">Transcripción</h2><p class="sub" id="cjMeta" style="margin:4px 0 0"></p></div>
+    <div class="acciones"><button class="btn sec" type="button" id="cjDl">Descargar</button><button class="btn" type="button" id="cjCerrar">Cerrar</button></div></header>
+  <div class="cuerpo" id="cjCuerpo"></div>
+</aside>
 
 <script src="/js/tc.js"></script>
 <script>
@@ -325,12 +353,76 @@ td textarea{min-height:56px;resize:vertical}
 
     // entrevistas
     var E = DATA.entrevistas || [];
-    $('entRows').innerHTML = E.length ? E.map(function (e) { return '<tr><td>' + fmtF(e.created_at) + '</td><td>' + esc(COACH[e.coach] || e.coach) + '</td><td>' + esc(e.idioma) + '</td><td>' + esc(e.duracion_min) + ' min</td><td>' + esc(e.min_reales) + ' min</td><td><b>' + esc(e.puntaje == null ? '–' : e.puntaje) + '</b></td><td>' + esc(e.puesto || (e.vacante || '').split('\n')[0] || '–') + '</td><td>' + esc(e.seniority || '–') + '</td><td>' + esc(e.veredicto || '') + '</td></tr>'; }).join('') : '<tr><td colspan="9" class="vacio">Sin entrevistas en el periodo</td></tr>';
+    pintaEnt();
 
     // agentes
     var R = DATA.runs || [];
     $('runRows').innerHTML = R.length ? R.map(function (r) { return '<tr><td>' + fmtF(r.created_at) + '</td><td>' + esc(r.agente) + '</td><td>' + esc(r.tarea) + '</td><td><span class="chip ' + (r.estado === 'ok' ? 'resuelto' : 'alta') + '">' + esc(r.estado) + '</span></td><td style="max-width:420px;font-size:12px;color:var(--suave)">' + esc(JSON.stringify(r.detalle || {})).slice(0, 300) + '</td><td>' + (r.duracion_ms != null ? Math.round(r.duracion_ms / 1000) + ' s' : '') + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="vacio">Los agentes todavía no han corrido</td></tr>';
   }
+
+  /* ---------- entrevistas y transcripciones ---------- */
+  var TODAS = null; // transcripciones completas del periodo, para buscar y descargar
+  function pintaEnt() {
+    var E = DATA.entrevistas || [], q = $('entBuscar').value.trim().toLowerCase();
+    if (q) E = E.filter(function (e) {
+      var t = [e.persona, e.puesto, e.vacante, e.veredicto].join(' ').toLowerCase();
+      if (t.indexOf(q) >= 0) return true;
+      var full = TODAS && TODAS.find(function (x) { return x.id === e.id; });
+      return !!(full && JSON.stringify(full.transcripcion || []).toLowerCase().indexOf(q) >= 0);
+    });
+    $('entRows').innerHTML = E.length ? E.map(function (e) {
+      return '<tr class="fila" data-id="' + esc(e.id) + '" tabindex="0"><td style="white-space:nowrap">' + fmtF(e.created_at) + '</td><td>' + esc(e.persona || '–') + '</td><td>' + esc(COACH[e.coach] || e.coach) + (e.idioma === 'en' ? ' (inglés)' : '') + '</td><td>' + esc(e.duracion_min) + ' min</td><td>' + esc(e.min_reales) + ' min</td><td>' + esc(e.turnos) + '</td><td><b>' + esc(e.puntaje == null ? '–' : e.puntaje) + '</b></td><td>' + esc(e.puesto || (e.vacante || '').split('\n')[0] || '–') + '</td><td>' + esc(e.veredicto || '') + '</td><td><button class="btn sec" type="button">Ver transcripción</button></td></tr>';
+    }).join('') : '<tr><td colspan="10" class="vacio">' + (q ? 'Ninguna entrevista coincide con la búsqueda' : 'Sin entrevistas en el periodo') + '</td></tr>';
+  }
+  function cargaTodas() {
+    if (TODAS) return Promise.resolve(TODAS);
+    return rpc('tc_panel_transcripciones', Object.assign({ p_token: CODIGO }, rango())).then(function (d) { if (d && d.error) throw new Error(d.error); TODAS = d || []; return TODAS; });
+  }
+  var tBus = 0;
+  $('entBuscar').addEventListener('input', function () { clearTimeout(tBus); tBus = setTimeout(function () { if ($('entBuscar').value.trim().length > 2) cargaTodas().then(pintaEnt, pintaEnt); else pintaEnt(); }, 250); });
+  $('periodo').addEventListener('change', function () { TODAS = null; });
+  function quien(t) { return t.rol === 'coach' ? 'ENTREVISTADOR' : 'CANDIDATO'; }
+  function txtDe(e) {
+    var L = ['Entrevista ' + e.id, 'Fecha: ' + new Date(e.fecha || e.created_at).toLocaleString('es-MX'), 'Persona: ' + ((e.jugador && e.jugador.nombre) || e.persona || '-'), 'Coach: ' + (COACH[e.coach] || e.coach) + ' | Idioma: ' + e.idioma + ' | Eligió ' + (e.duracion_elegida_min || e.duracion_min) + ' min | Duró ' + Math.round((e.duracion_real_seg || 0) / 60) + ' min', 'Puntaje: ' + (e.puntaje == null ? '-' : e.puntaje) + (e.veredicto || (e.evaluacion && e.evaluacion.veredicto) ? ' | ' + (e.veredicto || e.evaluacion.veredicto) : ''), 'Vacante: ' + String(e.vacante || '-').split('\n')[0], ''];
+    (e.transcripcion || []).forEach(function (t) { L.push(quien(t) + ': ' + (t.texto || '')); L.push(''); });
+    return L.join('\n');
+  }
+  function baja(nombre, texto, tipo) { var b = new Blob([texto], { type: tipo }), u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = nombre; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(u); a.remove(); }, 1500); }
+  var hoy = function () { return new Date().toISOString().slice(0, 10); };
+  $('dlTxt').onclick = function () { $('dlEstado').textContent = 'Preparando…'; cargaTodas().then(function (T) { baja('transcripciones_training_camp_' + hoy() + '.txt', T.map(txtDe).join('\n\n==========================================\n\n'), 'text/plain;charset=utf-8'); $('dlEstado').textContent = T.length + ' transcripciones descargadas'; }).catch(function () { $('dlEstado').textContent = 'No se pudo descargar. Intenta de nuevo.'; }); };
+  $('dlJson').onclick = function () { $('dlEstado').textContent = 'Preparando…'; cargaTodas().then(function (T) { baja('transcripciones_training_camp_' + hoy() + '.json', JSON.stringify(T, null, 2), 'application/json'); $('dlEstado').textContent = T.length + ' transcripciones descargadas'; }).catch(function () { $('dlEstado').textContent = 'No se pudo descargar. Intenta de nuevo.'; }); };
+
+  var ACTUAL = null, ultimoFoco = null;
+  function abreEnt(id) {
+    ultimoFoco = document.activeElement;
+    $('velo').hidden = false; $('cajon').hidden = false; $('cjT').textContent = 'Cargando…'; $('cjMeta').textContent = ''; $('cjCuerpo').innerHTML = '';
+    rpc('tc_panel_entrevista', { p_token: CODIGO, p_id: id }).then(function (e) {
+      if (!e || e.error) { $('cjT').textContent = 'No se pudo abrir'; return; }
+      ACTUAL = e; var ev = e.evaluacion || {}, j = e.jugador || {}, sk = e.skills;
+      $('cjT').textContent = j.nombre || 'Entrevista';
+      $('cjMeta').textContent = fmtF(e.created_at) + ' · Coach ' + (COACH[e.coach] || e.coach) + ' · ' + (e.idioma === 'en' ? 'inglés' : 'español') + ' · eligió ' + e.duracion_min + ' min, duró ' + Math.round((e.duracion_real_seg || 0) / 60) + ' min · puntaje ' + (e.puntaje == null ? '–' : e.puntaje) + (e.acepta_uso_ia ? ' · aceptó uso para entrenar' : ' · no aceptó uso para entrenar');
+      var h = [];
+      if (j.carrera || j.liga) h.push('<p class="sub" style="margin:0 0 12px">' + esc([j.carrera, j.liga, j.ciudad, j.estado, j.ingles ? 'inglés ' + j.ingles : ''].filter(Boolean).join(' · ')) + '</p>');
+      if (e.vacante) h.push('<details class="vac card"><summary>Vacante</summary><div>' + esc(e.vacante) + '</div></details>');
+      h.push('<h3>Transcripción (' + (e.transcripcion || []).length + ' turnos)</h3><div class="chat">' + (e.transcripcion || []).map(function (t) {
+        return '<div class="turno ' + (t.rol === 'coach' ? 'coach' : 'jug') + '"><small>' + (t.rol === 'coach' ? 'ENTREVISTADOR' + (t.competencia ? ' · ' + esc(String(t.competencia).toUpperCase()) : '') : 'CANDIDATO') + '</small>' + esc(t.texto || '') + '</div>';
+      }).join('') + '</div>');
+      if (ev.resumen || ev.veredicto) {
+        h.push('<h3>Evaluación</h3><div class="card"><b>' + esc(ev.veredicto || '') + '</b><p style="margin:6px 0 0">' + esc(ev.resumen || '') + '</p>' + (ev.competencias || []).map(function (c) { return '<div class="comp"><b>' + esc(c.nombre) + '</b><span><b>' + esc(c.nivel) + '/5</b></span>' + (c.evidencia ? '<q>' + esc(c.evidencia) + '</q>' : '') + '<p>' + esc(c.comentario || '') + '</p></div>'; }).join('') + '</div>');
+      }
+      if (sk) {
+        var lista = function (a) { return (a || []).map(function (x) { return '<span class="chip">' + esc(x.nombre) + (x.nivel ? ' ' + x.nivel + '/5' : '') + '</span>'; }).join(' ') || '<span class="ia">Sin datos</span>'; };
+        h.push('<h3>Skills que detectó el agente</h3><div class="card"><p style="margin:0 0 8px"><b>' + esc(sk.puesto || '') + '</b> · ' + esc(sk.seniority || '') + (sk.anios_experiencia != null ? ' · ' + sk.anios_experiencia + (sk.anios_experiencia == 1 ? ' año' : ' años') + ' de experiencia' : '') + '</p><p class="ia"><b>Técnicas</b></p><div>' + lista(sk.tecnicas) + '</div><p class="ia"><b>Blandas</b></p><div>' + lista(sk.blandas) + '</div><p class="ia"><b>Brechas contra la vacante</b></p><div>' + lista(sk.brechas) + '</div>' + (sk.resumen ? '<p style="margin:10px 0 0;white-space:pre-wrap">' + esc(sk.resumen) + '</p>' : '') + '</div>');
+      } else h.push('<p class="ia" style="margin-top:16px">El agente de skills todavía no analiza esta entrevista.</p>');
+      $('cjCuerpo').innerHTML = h.join(''); $('cjCerrar').focus();
+    }).catch(function () { $('cjT').textContent = 'No se pudo abrir. Intenta de nuevo.'; });
+  }
+  function cierraEnt() { $('velo').hidden = true; $('cajon').hidden = true; ACTUAL = null; if (ultimoFoco) ultimoFoco.focus(); }
+  $('entRows').addEventListener('click', function (e) { var tr = e.target.closest('tr.fila'); if (tr) abreEnt(tr.dataset.id); });
+  $('entRows').addEventListener('keydown', function (e) { var tr = e.target.closest('tr.fila'); if (tr && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); abreEnt(tr.dataset.id); } });
+  $('cjCerrar').onclick = cierraEnt; $('velo').onclick = cierraEnt;
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cajon').hidden) cierraEnt(); });
+  $('cjDl').onclick = function () { if (ACTUAL) baja('transcripcion_' + String((ACTUAL.jugador && ACTUAL.jugador.nombre) || 'entrevista').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '_' + String(ACTUAL.created_at).slice(0, 10) + '.txt', txtDe(ACTUAL), 'text/plain;charset=utf-8'); };
 
   var ESTADOS = [['nuevo', 'Nuevo'], ['en_revision', 'En revisión'], ['en_proceso', 'En proceso'], ['resuelto', 'Resuelto'], ['descartado', 'Descartado']];
   var TIPOS = { problema: 'Problema', idea: 'Idea', opinion: 'Opinión', calificacion: 'Calificación' };
