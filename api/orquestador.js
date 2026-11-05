@@ -4,6 +4,7 @@
 const { db, verificarPanel, dia } = require('./_agentes');
 const { readBody } = require('./_cv');
 const skills = require('./_agente-skills');
+const auditor = require('./_agente-auditor');
 const analitico = require('./_agente-analitico');
 
 async function paso(log, agente, tarea, fn) {
@@ -35,7 +36,9 @@ module.exports = async function handler(req, res) {
   const ahora = new Date();
 
   // 1) agente de skills: entrevistas nuevas
-  if (!forzar || forzar === 'skills') await paso(log, 'skills', 'perfiles de entrevistas', () => skills.correr({ limite: 9, hastaMs: limite - 90000 }));
+  if (!forzar || forzar === 'skills') await paso(log, 'skills', 'perfiles de entrevistas', () => skills.correr({ limite: 9, hastaMs: limite - 150000 }));
+  // 1b) agente auditor: califica al entrevistador y al evaluador de cada entrevista nueva
+  if (!forzar || forzar === 'auditor') await paso(log, 'auditor', 'auditar entrevistas', () => auditor.correr({ limite: 9, hastaMs: limite - 100000 }));
   // 2) agente analítico: clasificar el chat
   if (!forzar || forzar === 'triage') await paso(log, 'analitico', 'clasificar comentarios', () => analitico.triage());
   // 3) auditoría quincenal

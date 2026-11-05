@@ -118,6 +118,20 @@ tr.fila{cursor:pointer} tr.fila:hover td{background:#F6FAFC}
 .comp p{grid-column:1/-1;margin:0;color:var(--suave)}
 details.vac summary{cursor:pointer;font-weight:700}
 details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-top:8px}
+.aud{margin-top:22px}
+.aud .dim{padding:10px 0;border-bottom:1px solid var(--linea)}
+.aud .dim b{display:block;font-size:13px}
+.aud .dim small{display:block;color:var(--suave);font-size:11.5px;margin:2px 0 6px}
+.aud .dim .seg{display:inline-flex;gap:4px}
+.aud .dim .seg button{width:38px;height:34px;border:1px solid var(--linea);border-radius:8px;background:#fff;font:800 13px var(--body);cursor:pointer}
+.aud .dim .seg button[aria-pressed="true"]{background:var(--azul);border-color:var(--azul);color:#fff}
+.aud .grupo{margin:14px 0 0;font:800 12px var(--body);color:var(--naranja);letter-spacing:.04em}
+.aud .band{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.aud .band label{display:inline-flex;gap:6px;align-items:center;padding:5px 10px;border:1px solid var(--linea);border-radius:999px;font-size:12px;background:#fff;cursor:pointer}
+.aud textarea,.aud input[type=text]{width:100%;border:1px solid var(--linea);border-radius:10px;padding:8px 10px;font-size:13px;background:#fff}
+.aud textarea{min-height:70px}
+.cmp td.dif2{color:var(--critico);font-weight:800}
+.cmp td.dif0{color:var(--ok);font-weight:800}
 </style>
 </head>
 <body>
@@ -149,6 +163,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
     <button role="tab" data-t="informes" aria-selected="false">Informes</button>
     <button role="tab" data-t="skills" aria-selected="false">Skills</button>
     <button role="tab" data-t="entrevistas" aria-selected="false">Entrevistas y transcripciones</button>
+    <button role="tab" data-t="auditoria" aria-selected="false">Auditoría de agentes</button>
     <button role="tab" data-t="agentes" aria-selected="false">Agentes</button>
   </nav>
   <main>
@@ -217,6 +232,18 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
       <div class="card" style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Persona</th><th>Coach</th><th>Eligió</th><th>Duró</th><th>Turnos</th><th>Puntaje</th><th>Puesto</th><th>Veredicto</th><th></th></tr></thead><tbody id="entRows"></tbody></table></div>
     </section>
 
+    <section data-s="auditoria" hidden>
+      <h2>Auditoría de agentes</h2>
+      <p class="sub">Personas y el agente auditor califican al entrevistador y al evaluador con la misma rúbrica. La coincidencia entre ambos dice qué tanto podemos confiar en el auditor automático.</p>
+      <div class="grid g4" id="audKpis"></div>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="card"><h3>Coincidencia por dimensión</h3><p class="sub" style="margin:-4px 0 10px">Porcentaje de veces que el agente quedó a 1 punto o menos de la calificación humana.</p><div style="overflow-x:auto"><table><thead><tr><th>Dimensión</th><th>Casos</th><th>A ±1</th><th>Exacta</th><th>Prom. humano</th><th>Prom. agente</th></tr></thead><tbody id="audDims"></tbody></table></div></div>
+        <div class="card"><h3>Banderas más frecuentes</h3><div class="barras" id="audBand"></div><h3 style="margin-top:18px">Promedio por dimensión según el agente</h3><div class="barras" id="audProm"></div></div>
+      </div>
+      <div class="card" style="margin-top:16px;overflow-x:auto"><h3>Pendientes de calificación humana</h3><p class="sub" style="margin:-4px 0 10px">Primero las que ya auditó el agente, para poder comparar. Califica sin ver lo que dijo el agente: se muestra al guardar la tuya.</p><table><thead><tr><th>Fecha</th><th>Persona</th><th>Coach</th><th>Puntaje</th><th>Agente</th><th></th></tr></thead><tbody id="audPend"></tbody></table></div>
+      <details class="card" style="margin-top:16px"><summary style="cursor:pointer;font-weight:800">Ver la rúbrica completa</summary><div id="audRub" style="margin-top:12px"></div></details>
+    </section>
+
     <section data-s="agentes" hidden>
       <h2>Agentes</h2>
       <p class="sub">El orquestador corre todos los días a las 7:17 a.m. (hora de México): manda al agente de skills a analizar las entrevistas nuevas, al analítico a clasificar el chat, y cada 14 días la auditoría y cada mes el reporte.</p>
@@ -229,7 +256,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
 <div class="velo" id="velo" hidden></div>
 <aside class="cajon" id="cajon" role="dialog" aria-modal="true" aria-labelledby="cjT" hidden>
   <header><div><h2 id="cjT">Transcripción</h2><p class="sub" id="cjMeta" style="margin:4px 0 0"></p></div>
-    <div class="acciones"><button class="btn sec" type="button" id="cjDl">Descargar</button><button class="btn" type="button" id="cjCerrar">Cerrar</button></div></header>
+    <div class="acciones"><button class="btn sec" type="button" id="cjAud">Auditar</button><button class="btn sec" type="button" id="cjDl">Descargar</button><button class="btn" type="button" id="cjCerrar">Cerrar</button></div></header>
   <div class="cuerpo" id="cjCuerpo"></div>
 </aside>
 
@@ -269,7 +296,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
     c = c || CODIGO;
     return rpc('tc_panel', Object.assign({ p_token: c }, rango())).then(function (d) {
       if (!d || d.error) return false;
-      CODIGO = c; DATA = d; $('vLogin').hidden = true; $('vPanel').hidden = false; pinta(); return true;
+      CODIGO = c; DATA = d; $('vLogin').hidden = true; $('vPanel').hidden = false; pinta(); cargaAud(); return true;
     });
   }
   $('periodo').onchange = function () { carga(); };
@@ -417,7 +444,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
         var lista = function (a) { return (a || []).map(function (x) { return '<span class="chip">' + esc(x.nombre) + (x.nivel ? ' ' + x.nivel + '/5' : '') + '</span>'; }).join(' ') || '<span class="ia">Sin datos</span>'; };
         h.push('<h3>Skills que detectó el agente</h3><div class="card"><p style="margin:0 0 8px"><b>' + esc(sk.puesto || '') + '</b> · ' + esc(sk.seniority || '') + (sk.anios_experiencia != null ? ' · ' + sk.anios_experiencia + (sk.anios_experiencia == 1 ? ' año' : ' años') + ' de experiencia' : '') + '</p><p class="ia"><b>Técnicas</b></p><div>' + lista(sk.tecnicas) + '</div><p class="ia"><b>Blandas</b></p><div>' + lista(sk.blandas) + '</div><p class="ia"><b>Brechas contra la vacante</b></p><div>' + lista(sk.brechas) + '</div>' + (sk.resumen ? '<p style="margin:10px 0 0;white-space:pre-wrap">' + esc(sk.resumen) + '</p>' : '') + '</div>');
       } else h.push('<p class="ia" style="margin-top:16px">El agente de skills todavía no analiza esta entrevista.</p>');
-      $('cjCuerpo').innerHTML = h.join(''); $('cjCerrar').focus();
+      $('cjCuerpo').innerHTML = h.join(''); pintaAud(e); $('cjCerrar').focus(); if (abrirEnAud) { abrirEnAud = false; setTimeout(function () { var f = $('audForm'); if (f) f.scrollIntoView({ behavior: 'smooth' }); }, 60); }
     }).catch(function () { $('cjT').textContent = 'No se pudo abrir. Intenta de nuevo.'; });
   }
   function cierraEnt() { $('velo').hidden = true; $('cajon').hidden = true; ACTUAL = null; if (ultimoFoco) ultimoFoco.focus(); }
@@ -426,6 +453,107 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
   $('cjCerrar').onclick = cierraEnt; $('velo').onclick = cierraEnt;
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('cajon').hidden) cierraEnt(); });
   $('cjDl').onclick = function () { if (ACTUAL) baja('transcripcion_' + String((ACTUAL.jugador && ACTUAL.jugador.nombre) || 'entrevista').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]+/g, '_') + '_' + String(ACTUAL.created_at).slice(0, 10) + '.txt', txtDe(ACTUAL), 'text/plain;charset=utf-8'); };
+
+  /* ---------- auditoría de agentes ---------- */
+  var RUB = null, AUD = [], abrirEnAud = false;
+  fetch('/api/rubrica').then(function (r) { return r.json(); }).then(function (r) { RUB = r; pintaRub(); pintaAudTab(); }).catch(function () {});
+  function nomDim(k) { var d = RUB && RUB.dimensiones.find(function (x) { return x.clave === k; }); return d ? d.nombre : k; }
+  function nomBan(k) { var b = RUB && RUB.banderas.find(function (x) { return x.clave === k; }); return b ? b.nombre : k; }
+  function cargaAud() { return rpc('tc_panel_auditorias', Object.assign({ p_token: CODIGO }, rango())).then(function (d) { AUD = Array.isArray(d) ? d : []; pintaAudTab(); }).catch(function () {}); }
+  function pintaRub() {
+    if (!RUB) return; var g = '';
+    $('audRub').innerHTML = RUB.dimensiones.map(function (d) { var t = (d.grupo !== g ? '<p class="ia" style="font-weight:800;color:var(--naranja)">' + esc(d.grupo.toUpperCase()) + '</p>' : ''); g = d.grupo; return t + '<p style="margin:6px 0"><b>' + esc(d.nombre) + '.</b> 1: ' + esc(d.anclas[0]) + ' 3: ' + esc(d.anclas[1]) + ' 5: ' + esc(d.anclas[2]) + '</p>'; }).join('');
+  }
+  // compara humano(s) contra agente por dimensión; también entre personas si hay más de una
+  function concordancia() {
+    var porEnt = {};
+    AUD.forEach(function (a) { (porEnt[a.entrevista_id] = porEnt[a.entrevista_id] || { h: [], a: [] })[a.fuente === 'humano' ? 'h' : 'a'].push(a); });
+    var dims = {}, pares = [], hh = { n: 0, ok: 0 };
+    Object.keys(porEnt).forEach(function (id) {
+      var x = porEnt[id];
+      if (x.h.length > 1) for (var i = 0; i < x.h.length; i++) for (var j = i + 1; j < x.h.length; j++) Object.keys(x.h[i].puntajes || {}).forEach(function (k) { var u = x.h[j].puntajes[k]; if (u != null) { hh.n++; if (Math.abs(u - x.h[i].puntajes[k]) <= 1) hh.ok++; } });
+      if (!x.h.length || !x.a.length) return;
+      var ag = x.a[0].puntajes || {};
+      Object.keys(ag).forEach(function (k) {
+        var hs = x.h.map(function (h) { return (h.puntajes || {})[k]; }).filter(function (v) { return v != null; }); if (!hs.length) return;
+        var hm = hs.reduce(function (s, v) { return s + v; }, 0) / hs.length, av = ag[k];
+        var D = dims[k] = dims[k] || { n: 0, cerca: 0, exacta: 0, sh: 0, sa: 0 };
+        D.n++; D.sh += hm; D.sa += av; if (Math.abs(av - hm) <= 1) D.cerca++; if (Math.round(hm) === av) D.exacta++;
+        pares.push([Math.round(hm), av]);
+      });
+    });
+    // kappa ponderado cuadrático (1 a 5)
+    var kappa = null;
+    if (pares.length >= 5) {
+      var O = [], hist1 = [0, 0, 0, 0, 0], hist2 = [0, 0, 0, 0, 0], N = pares.length, num = 0, den = 0;
+      for (var i = 0; i < 5; i++) O.push([0, 0, 0, 0, 0]);
+      pares.forEach(function (p) { O[p[0] - 1][p[1] - 1]++; hist1[p[0] - 1]++; hist2[p[1] - 1]++; });
+      for (i = 0; i < 5; i++) for (var j = 0; j < 5; j++) { var w = Math.pow(i - j, 2) / 16, E = hist1[i] * hist2[j] / N; num += w * O[i][j]; den += w * E; }
+      kappa = den ? 1 - num / den : null;
+    }
+    return { porEnt: porEnt, dims: dims, pares: pares, kappa: kappa, hh: hh };
+  }
+  function pintaAudTab() {
+    if (!DATA) return;
+    var c = concordancia(), ents = DATA.entrevistas || [];
+    var conH = Object.keys(c.porEnt).filter(function (k) { return c.porEnt[k].h.length; }).length, conA = Object.keys(c.porEnt).filter(function (k) { return c.porEnt[k].a.length; }).length;
+    var ambas = Object.keys(c.porEnt).filter(function (k) { return c.porEnt[k].h.length && c.porEnt[k].a.length; }).length;
+    var cerca = c.pares.filter(function (p) { return Math.abs(p[0] - p[1]) <= 1; }).length, exac = c.pares.filter(function (p) { return p[0] === p[1]; }).length;
+    $('audKpis').innerHTML = kpi(n(conH) + ' / ' + n(ents.length), 'Entrevistas calificadas por personas', n(conA) + ' auditadas por el agente') +
+      kpi(c.pares.length ? Math.round(100 * cerca / c.pares.length) + '%' : '–', 'Coincidencia a ±1 punto', ambas ? 'en ' + ambas + ' entrevistas comparables' : 'Califica entrevistas que ya auditó el agente') +
+      kpi(c.pares.length ? Math.round(100 * exac / c.pares.length) + '%' : '–', 'Coincidencia exacta', c.pares.length + ' calificaciones comparadas') +
+      kpi(c.kappa != null ? c.kappa.toFixed(2) : '–', 'Kappa ponderado', c.kappa != null ? (c.kappa >= .8 ? 'Muy alta concordancia' : c.kappa >= .6 ? 'Concordancia sustancial' : c.kappa >= .4 ? 'Concordancia moderada' : 'Concordancia baja') : 'Se calcula con 5 o más comparaciones');
+    var D = c.dims, ks = RUB ? RUB.dimensiones.map(function (d) { return d.clave; }) : Object.keys(D);
+    $('audDims').innerHTML = ks.filter(function (k) { return D[k]; }).length ? ks.filter(function (k) { return D[k]; }).map(function (k) { var x = D[k]; return '<tr><td>' + esc(nomDim(k)) + '</td><td>' + x.n + '</td><td><b>' + Math.round(100 * x.cerca / x.n) + '%</b></td><td>' + Math.round(100 * x.exacta / x.n) + '%</td><td>' + (x.sh / x.n).toFixed(1) + '</td><td>' + (x.sa / x.n).toFixed(1) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="vacio">Aún no hay entrevistas calificadas por personas y por el agente</td></tr>';
+    var bc = {}; AUD.forEach(function (a) { (a.banderas || []).forEach(function (b) { var k = nomBan(b.tipo) + (a.fuente === 'humano' ? ' (personas)' : ' (agente)'); bc[k] = (bc[k] || 0) + 1; }); });
+    barras('audBand', objPares(bc), ' veces');
+    var pa = {}, pn = {}; AUD.filter(function (a) { return a.fuente === 'agente'; }).forEach(function (a) { Object.keys(a.puntajes || {}).forEach(function (k) { pa[k] = (pa[k] || 0) + a.puntajes[k]; pn[k] = (pn[k] || 0) + 1; }); });
+    barras('audProm', ks.filter(function (k) { return pn[k]; }).map(function (k) { var v = +(pa[k] / pn[k]).toFixed(1); return [nomDim(k), v, v + ' / 5']; }), ' de 5');
+    var pend = ents.filter(function (e) { return !(c.porEnt[e.id] && c.porEnt[e.id].h.length); }).sort(function (a, b) { return (c.porEnt[b.id] ? 1 : 0) - (c.porEnt[a.id] ? 1 : 0); });
+    $('audPend').innerHTML = pend.length ? pend.slice(0, 40).map(function (e) { return '<tr><td>' + fmtF(e.created_at) + '</td><td>' + esc(e.persona || '–') + '</td><td>' + esc(COACH[e.coach] || e.coach) + '</td><td>' + esc(e.puntaje == null ? '–' : e.puntaje) + '</td><td>' + (c.porEnt[e.id] && c.porEnt[e.id].a.length ? '<span class="chip resuelto">Auditada</span>' : '<span class="chip">Pendiente</span>') + '</td><td><button class="btn sec calificar" type="button" data-id="' + esc(e.id) + '">Calificar</button></td></tr>'; }).join('') : '<tr><td colspan="6" class="vacio">Todas las entrevistas del periodo ya tienen calificación humana</td></tr>';
+  }
+  $('audPend').addEventListener('click', function (e) { var b = e.target.closest('.calificar'); if (b) { abrirEnAud = true; abreEnt(b.dataset.id); } });
+  $('cjAud').onclick = function () { var f = $('audForm'); if (f) f.scrollIntoView({ behavior: 'smooth' }); };
+
+  function evaluador() { try { return localStorage.getItem('tc_panel_evaluador') || ''; } catch (e) { return ''; } }
+  function pintaAud(e) {
+    if (!RUB) return;
+    var yo = evaluador(), mias = (e.auditorias || []).filter(function (a) { return a.fuente === 'humano' && yo && a.evaluador === yo; })[0];
+    var ag = (e.auditorias || []).filter(function (a) { return a.fuente === 'agente'; })[0];
+    var otras = (e.auditorias || []).filter(function (a) { return a.fuente === 'humano' && a.evaluador !== yo; });
+    var P = Object.assign({}, mias ? mias.puntajes : {}), B = {}; ((mias && mias.banderas) || []).forEach(function (b) { B[b.tipo] = true; });
+    var t0 = Date.now(), g = '', box = document.createElement('section'); box.className = 'aud card'; box.id = 'audForm';
+    var h = '<h3 style="margin-top:0">Tu auditoría de esta entrevista</h3><p class="ia">Califica al entrevistador y al evaluador (no a la persona) con la rúbrica. ' + (ag && !mias ? 'El agente ya la auditó: verás su calificación cuando guardes la tuya.' : '') + '</p>' +
+      '<label class="ia" for="audQuien"><b>Tu nombre</b></label><input type="text" id="audQuien" value="' + esc(yo) + '" placeholder="Ej. Marita" style="margin-top:4px">';
+    RUB.dimensiones.forEach(function (d) {
+      if (d.grupo !== g) { h += '<p class="grupo">' + esc(d.grupo.toUpperCase()) + '</p>'; g = d.grupo; }
+      h += '<div class="dim" data-k="' + d.clave + '"><b>' + esc(d.nombre) + '</b><small>1: ' + esc(d.anclas[0]) + ' · 3: ' + esc(d.anclas[1]) + ' · 5: ' + esc(d.anclas[2]) + '</small><div class="seg">' + [1, 2, 3, 4, 5].map(function (v) { return '<button type="button" data-v="' + v + '" aria-pressed="' + (P[d.clave] === v) + '">' + v + '</button>'; }).join('') + '</div></div>';
+    });
+    h += '<p class="grupo">BANDERAS</p><div class="band">' + RUB.banderas.map(function (b) { return '<label><input type="checkbox" value="' + b.clave + '"' + (B[b.clave] ? ' checked' : '') + '>' + esc(b.nombre) + '</label>'; }).join('') + '</div>' +
+      '<p class="grupo">COMENTARIO</p><textarea id="audCom" placeholder="Qué corregirías en los agentes; cita el turno si puedes">' + esc(mias ? mias.comentario || '' : '') + '</textarea>' +
+      '<div class="acciones" style="margin-top:10px"><button class="btn" type="button" id="audGuardar">Guardar mi auditoría</button><span class="estado" id="audEst"></span></div><div id="audCmp"></div>';
+    box.innerHTML = h; $('cjCuerpo').appendChild(box);
+    box.querySelectorAll('.dim .seg').forEach(function (sg) { sg.addEventListener('click', function (ev) { var b = ev.target.closest('button'); if (!b) return; sg.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); P[sg.parentNode.dataset.k] = +b.dataset.v; }); });
+    function comparar() {
+      if (!ag) { $('audCmp').innerHTML = '<p class="ia" style="margin-top:12px">El agente todavía no audita esta entrevista; la comparación aparece cuando lo haga.</p>'; return; }
+      var filas = RUB.dimensiones.map(function (d) { var a = P[d.clave], b = ag.puntajes[d.clave]; var df = a != null && b != null ? Math.abs(a - b) : null; return '<tr><td>' + esc(d.nombre) + '</td><td>' + (a || '–') + '</td><td>' + (b || '–') + '</td>' + (otras.length ? '<td>' + otras.map(function (o) { return o.puntajes[d.clave] || '–'; }).join(' / ') + '</td>' : '') + '<td class="' + (df == null ? '' : df >= 2 ? 'dif2' : df === 0 ? 'dif0' : '') + '">' + (df == null ? '–' : df === 0 ? 'Igual' : '±' + df) + '</td></tr>'; }).join('');
+      $('audCmp').innerHTML = '<h3>Tú contra el agente</h3><table class="cmp"><thead><tr><th>Dimensión</th><th>Tú</th><th>Agente</th>' + (otras.length ? '<th>' + otras.map(function (o) { return esc(o.evaluador); }).join(' / ') + '</th>' : '') + '<th>Diferencia</th></tr></thead><tbody>' + filas + '</tbody></table>' +
+        ((ag.banderas || []).length ? '<p class="ia" style="margin-top:10px"><b>Banderas del agente:</b> ' + ag.banderas.map(function (b) { return esc(nomBan(b.tipo)) + (b.turno ? ' (turno ' + b.turno + ')' : '') + ': ' + esc(b.detalle || ''); }).join(' · ') + '</p>' : '') +
+        (ag.comentario ? '<details style="margin-top:8px"><summary class="ia" style="cursor:pointer">Ver el razonamiento del agente</summary><p style="white-space:pre-wrap;font-size:12.5px">' + esc(ag.comentario) + '</p></details>' : '');
+    }
+    if (mias) comparar();
+    $('audGuardar').onclick = function () {
+      var quien = $('audQuien').value.trim(), faltan = RUB.dimensiones.filter(function (d) { return !P[d.clave]; });
+      if (quien.length < 2) { $('audEst').textContent = 'Escribe tu nombre.'; $('audQuien').focus(); return; }
+      if (faltan.length) { $('audEst').textContent = 'Falta calificar: ' + faltan.map(function (d) { return d.nombre; }).join(', ') + '.'; return; }
+      try { localStorage.setItem('tc_panel_evaluador', quien); } catch (x) {}
+      var bands = Array.prototype.map.call(box.querySelectorAll('.band input:checked'), function (i) { return { tipo: i.value, severidad: 'media', detalle: 'Marcada por ' + quien }; });
+      $('audGuardar').disabled = true; $('audEst').textContent = 'Guardando…';
+      rpc('tc_panel_auditar', { p_token: CODIGO, p_entrevista: e.id, p_evaluador: quien, p_puntajes: P, p_banderas: bands, p_comentario: $('audCom').value, p_minutos: Math.round((Date.now() - t0) / 6000) / 10 })
+        .then(function (r) { $('audGuardar').disabled = false; if (!r || !r.ok) { $('audEst').textContent = 'No se guardó. Intenta de nuevo.'; return; } $('audEst').textContent = 'Guardada'; comparar(); cargaAud(); })
+        .catch(function () { $('audGuardar').disabled = false; $('audEst').textContent = 'No se guardó. Intenta de nuevo.'; });
+    };
+  }
 
   var ESTADOS = [['nuevo', 'Nuevo'], ['en_revision', 'En revisión'], ['en_proceso', 'En proceso'], ['resuelto', 'Resuelto'], ['descartado', 'Descartado']];
   var TIPOS = { problema: 'Problema', idea: 'Idea', opinion: 'Opinión', calificacion: 'Calificación' };
