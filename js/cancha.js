@@ -75,6 +75,8 @@
 
   $('vacante').value = P.vacante || '';
   $('vacante').addEventListener('input', function () { P.vacante = this.value.slice(0, 8000); saveP(); });
+  TCVacante.montar({ input: $('vacUrl'), boton: $('vacTraer'), estado: $('vacSt'), textarea: $('vacante'), valor: P.vacante_url,
+    alCambiarUrl: function (u) { P.vacante_url = u; saveP(); }, alTraer: function (t) { P.vacante = t.slice(0, 8000); saveP(); } });
 
   Object.keys(COACH).forEach(function (k) {
     var b = el('button'); b.type = 'button'; b.dataset.c = k;
@@ -97,6 +99,7 @@
     P.src = 'vestidor';
     var vacV = str((TC.store.get('tc_vestidor_v1') || {}).vacante);
     if (vacV) { P.vacante = vacV.slice(0, 8000); $('vacante').value = P.vacante; }
+    var urlV = str((TC.store.get('tc_vestidor_v1') || {}).vacante_url); if (urlV) { P.vacante_url = urlV; $('vacUrl').value = urlV; $('vacTraer').disabled = false; }
     saveP();
     setTimeout(function () {
       toast(vacV ? 'Tu CV y tu vacante del Vestidor ya están cargados. Elige coach y arranca.' : 'Tu CV del Vestidor ya está cargado. Pega la vacante, elige coach y arranca.');
@@ -248,10 +251,10 @@
 
   function startGame() {
     var idioma = P.coach === 'ingles' ? 'en' : P.lang;
-    G = { coach: P.coach, idioma: idioma, dur: P.dur, cv: getCV(), vacante: str(P.vacante), plan: null, historial: [], analyses: [],
+    G = { coach: P.coach, idioma: idioma, dur: P.dur, cv: getCV(), vacante: str(P.vacante), vacante_url: str(P.vacante_url), plan: null, historial: [], analyses: [],
       t0: 0, forceNext: false, ended: false, preguntas: 0, state: 'idle', fails: 0, m: { words: 0, speakSec: 0, fillers: 0, respuestas: 0 }, saved: false };
     voice = pickVoice(idioma);
-    TC.evento('entrevista_iniciada', { duracion_min: P.dur, coach: P.coach, idioma: idioma, cv_fuente: P.src, con_vacante: str(P.vacante).length > 20 });
+    TC.evento('entrevista_iniciada', { duracion_min: P.dur, coach: P.coach, idioma: idioma, cv_fuente: P.src, con_vacante: str(P.vacante).length > 20, con_link: !!str(P.vacante_url), dominio: P.vacante_url ? TCVacante.dominio(P.vacante_url) : null });
     fetch('/api/voz').then(function (r) { return r.json(); }).then(function (d) { nube = d && d.voz && d.voz !== 'navegador'; }).catch(function () {});
     $('coachImg').src = '/assets/' + COACH[G.coach].img + '.png';
     $('boardTitle').textContent = (G.vacante.split('\n')[0] || 'Coach ' + COACH[G.coach].n).replace(/[—–-].*$/, '').trim().slice(0, 40) || 'Entrevista';
@@ -439,7 +442,7 @@
   $('analRetry').onclick = evaluate;
   function persist(ev, m) {
     if (G.saved) return; G.saved = true;
-    TC.guardarEntrevista({ coach: G.coach, idioma: G.idioma, duracion_min: G.dur, duracion_real_seg: m.duracion_seg, vacante: G.vacante,
+    TC.guardarEntrevista({ coach: G.coach, idioma: G.idioma, duracion_min: G.dur, duracion_real_seg: m.duracion_seg, vacante: G.vacante, vacante_url: G.vacante_url,
       cv: G.cv && typeof G.cv === 'object' ? G.cv : (G.cv ? { texto: String(G.cv).slice(0, 15000) } : null),
       transcripcion: G.historial, evaluacion: ev ? Object.assign({}, ev, { metricas: m, plan: G.plan }) : { metricas: m, plan: G.plan } })
       .catch(function () { G.saved = false; });

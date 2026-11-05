@@ -57,6 +57,18 @@ a{color:inherit}
 .seg button{min-height:40px;border:0;border-radius:999px;background:transparent;color:var(--ink);font:700 13px var(--body);cursor:pointer;padding:0 10px}
 .seg button[aria-pressed="true"]{background:var(--deep);color:var(--white)}
 .seg button:disabled{opacity:.45;cursor:not-allowed}
+.vlink{display:grid;gap:6px;margin:4px 0 10px}
+.vlink label{font:700 12.5px var(--body);color:var(--ink)}
+.vlink label small{font-weight:600;color:var(--ink-soft)}
+.vlink-row{display:flex;gap:8px}
+.vlink-row input{flex:1;min-width:0;height:44px;border-radius:12px;border:2px solid var(--line);padding:0 12px;font:500 14px var(--body);background:var(--white);color:var(--ink)}
+.vlink-row input:focus{outline:none;border-color:var(--blue)}
+.vlink-row button{flex:none;min-height:44px;border:0;border-radius:12px;padding:0 14px;background:var(--deep);color:var(--white);font:700 13px var(--body);cursor:pointer}
+.vlink-row button:disabled{opacity:.45;cursor:default}
+.vlink-st{margin:0;min-height:0;font:600 12.5px/1.45 var(--body);color:var(--ink-soft)}
+.vlink-st:empty{display:none}
+.vlink-usar{margin-left:4px;border:0;background:none;padding:0;color:var(--blue);font:700 12.5px var(--body);text-decoration:underline;cursor:pointer}
+@media (max-width:520px){.vlink-row{flex-direction:column}}
 textarea.in{width:100%;min-height:130px;border-radius:16px;border:2px solid var(--line);padding:12px 14px;font:500 14px/1.5 var(--body);resize:vertical;background:var(--white)}
 .cvbox{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:16px;background:var(--paper);border:2px solid var(--line)}
 .cvbox .ic{flex:none;width:44px;height:44px;border-radius:12px;background:var(--orange);color:var(--white);display:flex;align-items:center;justify-content:center;font:400 18px var(--display)}
@@ -265,6 +277,7 @@ details.trans b{font-weight:800}
     <section class="card" aria-labelledby="h2">
       <h2 id="h2"><b>02</b>El rival: la vacante</h2>
       <p class="hint">Pega la descripción del puesto. Si no tienes una, el coach te entrevista para un puesto acorde a tu CV.</p>
+      <div class="vlink"><label for="vacUrl">Link de la vacante <small>(opcional)</small></label><div class="vlink-row"><input id="vacUrl" type="url" inputmode="url" placeholder="Pega el link de LinkedIn, OCC, Computrabajo, Indeed…" autocomplete="off"><button type="button" id="vacTraer">Traer descripción</button></div><p class="vlink-st" id="vacSt" aria-live="polite"></p></div>
       <textarea class="in" id="vacante" placeholder="Ej. Analista de Datos Jr. — Buscamos a alguien con SQL y Power BI…"></textarea>
     </section>
 
@@ -380,6 +393,7 @@ details.trans b{font-weight:800}
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="/js/tc.js"></script>
+<script src="/js/vacante.js"></script>
 <script src="/vendor/jspdf.umd.min.js" defer></script>
 <script src="/js/cancha.js" defer></script>
 <script src="/js/feedback.js" defer></script>

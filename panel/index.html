@@ -168,6 +168,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
         <div class="card"><h3>Entrevistas por coach</h3><div class="barras" id="bCoach"></div></div>
         <div class="card"><h3>Descargas de CV por formato</h3><div class="barras" id="bFormato"></div></div>
       </div>
+      <div class="grid g2" style="margin-top:16px"><div class="card"><h3>De dónde vienen las vacantes</h3><p class="sub" style="margin:-4px 0 10px">Según el link que pegan en El Vestidor y La Cancha.</p><div class="barras" id="bFuente"></div></div></div>
       <p class="sub" style="margin-top:14px">El registro detallado de eventos (visitas, inicios y descargas) empezó el 2 de noviembre de 2026. Antes de esa fecha solo hay fichas, CVs guardados y entrevistas terminadas.</p>
     </section>
 
@@ -332,6 +333,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
     barras('bDur', ['10', '20', '30'].map(function (k) { return [k + ' minutos', (m.duracion_elegida_dist || {})[k] || 0]; }).filter(function (p, i, a) { return a.some(function (x) { return x[1]; }); }), ' veces');
     barras('bCoach', objPares(m.por_coach, function (k) { return COACH[k] || k; }), ' entrevistas');
     barras('bFormato', objPares(m.cv_por_formato, function (k) { return k.toUpperCase(); }), ' descargas');
+    barras('bFuente', objPares(m.vacantes_por_fuente), ' vacantes');
 
     // comentarios
     $('fbKpis').innerHTML = kpi(n(fb.total), 'Comentarios en el periodo') + kpi(n(fb.abiertos), 'Abiertos', 'Nuevos, en revisión o en proceso') + kpi(n(fb.resueltos), 'Resueltos') + kpi(fb.calificacion_prom != null ? fb.calificacion_prom + ' / 5' : '–', 'Calificación promedio');
@@ -383,7 +385,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
   $('periodo').addEventListener('change', function () { TODAS = null; });
   function quien(t) { return t.rol === 'coach' ? 'ENTREVISTADOR' : 'CANDIDATO'; }
   function txtDe(e) {
-    var L = ['Entrevista ' + e.id, 'Fecha: ' + new Date(e.fecha || e.created_at).toLocaleString('es-MX'), 'Persona: ' + ((e.jugador && e.jugador.nombre) || e.persona || '-'), 'Coach: ' + (COACH[e.coach] || e.coach) + ' | Idioma: ' + e.idioma + ' | Eligió ' + (e.duracion_elegida_min || e.duracion_min) + ' min | Duró ' + Math.round((e.duracion_real_seg || 0) / 60) + ' min', 'Puntaje: ' + (e.puntaje == null ? '-' : e.puntaje) + (e.veredicto || (e.evaluacion && e.evaluacion.veredicto) ? ' | ' + (e.veredicto || e.evaluacion.veredicto) : ''), 'Vacante: ' + String(e.vacante || '-').split('\n')[0], ''];
+    var L = ['Entrevista ' + e.id, 'Fecha: ' + new Date(e.fecha || e.created_at).toLocaleString('es-MX'), 'Persona: ' + ((e.jugador && e.jugador.nombre) || e.persona || '-'), 'Coach: ' + (COACH[e.coach] || e.coach) + ' | Idioma: ' + e.idioma + ' | Eligió ' + (e.duracion_elegida_min || e.duracion_min) + ' min | Duró ' + Math.round((e.duracion_real_seg || 0) / 60) + ' min', 'Puntaje: ' + (e.puntaje == null ? '-' : e.puntaje) + (e.veredicto || (e.evaluacion && e.evaluacion.veredicto) ? ' | ' + (e.veredicto || e.evaluacion.veredicto) : ''), 'Vacante: ' + String(e.vacante || '-').split('\n')[0] + (e.vacante_url ? ' | ' + e.vacante_url : ''), ''];
     (e.transcripcion || []).forEach(function (t) { L.push(quien(t) + ': ' + (t.texto || '')); L.push(''); });
     return L.join('\n');
   }
@@ -403,6 +405,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
       $('cjMeta').textContent = fmtF(e.created_at) + ' · Coach ' + (COACH[e.coach] || e.coach) + ' · ' + (e.idioma === 'en' ? 'inglés' : 'español') + ' · eligió ' + e.duracion_min + ' min, duró ' + Math.round((e.duracion_real_seg || 0) / 60) + ' min · puntaje ' + (e.puntaje == null ? '–' : e.puntaje) + (e.acepta_uso_ia ? ' · aceptó uso para entrenar' : ' · no aceptó uso para entrenar');
       var h = [];
       if (j.carrera || j.liga) h.push('<p class="sub" style="margin:0 0 12px">' + esc([j.carrera, j.liga, j.ciudad, j.estado, j.ingles ? 'inglés ' + j.ingles : ''].filter(Boolean).join(' · ')) + '</p>');
+      if (e.vacante_url && /^https?:\/\//i.test(e.vacante_url)) h.push('<p style="margin:0 0 10px;font-size:13px"><b>Link de la vacante:</b> <a href="' + esc(e.vacante_url) + '" target="_blank" rel="noopener noreferrer">' + esc(e.vacante_url.slice(0, 90)) + '</a></p>');
       if (e.vacante) h.push('<details class="vac card"><summary>Vacante</summary><div>' + esc(e.vacante) + '</div></details>');
       h.push('<h3>Transcripción (' + (e.transcripcion || []).length + ' turnos)</h3><div class="chat">' + (e.transcripcion || []).map(function (t) {
         return '<div class="turno ' + (t.rol === 'coach' ? 'coach' : 'jug') + '"><small>' + (t.rol === 'coach' ? 'ENTREVISTADOR' + (t.competencia ? ' · ' + esc(String(t.competencia).toUpperCase()) : '') : 'CANDIDATO') + '</small>' + esc(t.texto || '') + '</div>';

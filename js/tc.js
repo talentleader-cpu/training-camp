@@ -83,6 +83,7 @@
         jugador_id: j ? j.id : null,
         idioma: extra && extra.idioma === 'en' ? 'en' : 'es',
         vacante: extra && extra.vacante ? String(extra.vacante).slice(0, 8000) : null,
+        vacante_url: extra && extra.vacante_url ? String(extra.vacante_url).slice(0, 1000) : null,
         cv: cv,
         puntaje_ats: extra && typeof extra.ats === 'number' ? Math.max(0, Math.min(100, Math.round(extra.ats))) : null,
         acepta_uso_ia: !!(j && j.acepta_uso_ia)
@@ -95,6 +96,7 @@
         coach: e.coach, idioma: e.idioma === 'en' ? 'en' : 'es', duracion_min: e.duracion_min,
         duracion_real_seg: Math.max(0, Math.min(3600, Math.round(e.duracion_real_seg || 0))),
         vacante: e.vacante ? String(e.vacante).slice(0, 8000) : null,
+        vacante_url: e.vacante_url ? String(e.vacante_url).slice(0, 1000) : null,
         cv: e.cv || null, transcripcion: e.transcripcion || [], evaluacion: e.evaluacion || null,
         puntaje: e.evaluacion && typeof e.evaluacion.puntaje === 'number' ? e.evaluacion.puntaje : null,
         acepta_uso_ia: !!(j && j.acepta_uso_ia)

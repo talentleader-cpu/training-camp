@@ -248,8 +248,10 @@
 
   /* ---------- vacante ---------- */
   $('vacante').value = S.vacante || '';
-  function vacState() { $('vacState').textContent = S.vacante ? 'Agregada ✓' : 'Agregar'; }
+  function vacState() { $('vacState').textContent = S.vacante ? 'Agregada ✓' : S.vacante_url ? 'Link guardado' : 'Agregar'; }
   $('vacante').addEventListener('input', function () { S.vacante = this.value.slice(0, 8000); save(); vacState(); renderAts(); });
+  TCVacante.montar({ input: $('vacUrl'), boton: $('vacTraer'), estado: $('vacSt'), textarea: $('vacante'), valor: S.vacante_url,
+    alCambiarUrl: function (u) { S.vacante_url = u; save(); vacState(); }, alTraer: function (t) { S.vacante = t.slice(0, 8000); save(); vacState(); renderAts(); } });
 
   /* ---------- idioma del CV (ES / EN / ES+EN) ---------- */
   document.querySelectorAll('[data-lang]').forEach(function (b) {
@@ -472,7 +474,7 @@
   function persist(cv, lang) {
     var h = hashCV(cv); S.saved = S.saved || {};
     if (S.saved[lang] === h) return;
-    TC.guardarCV(cv, { idioma: lang, vacante: S.vacante, ats: computeAts(cv).score }).then(function () { S.saved[lang] = h; save(); }).catch(function () { /* no bloquea la descarga */ });
+    TC.guardarCV(cv, { idioma: lang, vacante: S.vacante, vacante_url: S.vacante_url, ats: computeAts(cv).score }).then(function () { S.saved[lang] = h; save(); }).catch(function () { /* no bloquea la descarga */ });
   }
   function download(blob, name) {
     var u = URL.createObjectURL(blob), a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click();
@@ -586,7 +588,7 @@
     var ok = $('reset').dataset.armed === '1';
     if (!ok) { $('reset').dataset.armed = '1'; $('reset').textContent = 'Toca otra vez para borrar este CV'; setTimeout(function () { $('reset').dataset.armed = ''; $('reset').textContent = 'Empezar un CV nuevo'; }, 4000); return; }
     S = fresh(); trError = '';
-    $('vacante').value = ''; prevBullets = new Set(); save(); $('reset').dataset.armed = ''; $('reset').textContent = 'Empezar un CV nuevo'; renderAll();
+    $('vacante').value = ''; $('vacUrl').value = ''; $('vacSt').textContent = ''; prevBullets = new Set(); save(); $('reset').dataset.armed = ''; $('reset').textContent = 'Empezar un CV nuevo'; renderAll();
   };
 
   function renderAll() { syncLang(); renderLog(); renderSteps(); renderVer(); renderCV(); renderAts(); syncLk(); renderUp(); }

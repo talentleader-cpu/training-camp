@@ -17,7 +17,8 @@
     "api/cancha-evaluar.js": { "maxDuration": 60 },
     "api/cv-leer.js": { "maxDuration": 60 },
     "api/voz.js": { "maxDuration": 30 },
-    "api/orquestador.js": { "maxDuration": 300 }
+    "api/orquestador.js": { "maxDuration": 300 },
+    "api/vacante-leer.js": { "maxDuration": 20 }
   },
   "headers": [
     { "source": "/panel/(.*)", "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }] }
