@@ -40,7 +40,7 @@ module.exports = async function handler(req, res) {
   // 1b) agente auditor: califica al entrevistador y al evaluador de cada entrevista nueva
   if (!forzar || forzar === 'auditor') await paso(log, 'auditor', 'auditar entrevistas', () => auditor.correr({ limite: 9, hastaMs: limite - 100000 }));
   // 2) agente analítico: clasificar el chat
-  if (!forzar || forzar === 'triage') await paso(log, 'analitico', 'clasificar comentarios', () => analitico.triage());
+  if (!forzar || forzar === 'triage') await paso(log, 'soporte', 'resolver comentarios del chat', () => analitico.triage());
   // 3) auditoría quincenal
   if (Date.now() < limite - 70000) {
     let toca = forzar === 'quincenal';

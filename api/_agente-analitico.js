@@ -19,10 +19,13 @@ function embudo(m) {
   };
 }
 
-/* ---------------- 1. Triage del chat de comentarios ---------------- */
+/* ---------------- 1. Agente de soporte: resuelve el chat de comentarios ---------------- */
+// Por cada comentario abierto: diagnostica con la actividad de la persona, escribe el paso a paso para resolverlo
+// en la columna "Estado y cómo se resolvió" del panel y cierra lo que no necesita cambios de código.
+// Nunca sobrescribe lo que ya escribió una persona.
 const TRIAGE = {
-  name: 'triage',
-  description: 'Clasificación de comentarios del chat de la prueba piloto.',
+  name: 'resolver',
+  description: 'Diagnóstico y plan de solución de cada comentario del chat.',
   input_schema: {
     type: 'object',
     properties: {
@@ -32,36 +35,57 @@ const TRIAGE = {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            categoria: { type: 'string', enum: ['Error técnico', 'Voz o micrófono', 'Vestidor (CV)', 'Cancha (entrevista)', 'Reporte de resultados', 'Diseño o usabilidad', 'Idea nueva', 'Opinión general', 'Otro'] },
+            categoria: { type: 'string', enum: ['Error técnico', 'Voz o micrófono', 'Vestidor (CV)', 'Cancha (entrevista)', 'Reporte de resultados', 'Diseño o usabilidad', 'Idea nueva', 'Opinión general', 'Calificación', 'Otro'] },
             prioridad: { type: 'string', enum: ['alta', 'media', 'baja'] },
             resumen: { type: 'string', description: 'Una línea.' },
-            causa_probable: { type: 'string' },
-            solucion_sugerida: { type: 'string', description: 'Qué cambiar en el producto, concreto.' },
-            duplicado_de: { type: 'string', description: 'id de otro comentario de esta lista que reporta lo mismo, si aplica.' }
+            diagnostico: { type: 'string', description: 'Qué le pasó a la persona, usando su actividad registrada (eventos, página, pantalla, errores). Di qué es dato y qué es hipótesis.' },
+            pasos: { type: 'array', items: { type: 'string' }, minItems: 1, maxItems: 7, description: 'Paso a paso concreto para resolverlo en el producto, en orden.' },
+            como_verificar: { type: 'string', description: 'Cómo comprobar que quedó resuelto.' },
+            cerrar: { type: 'boolean', description: 'true solo si no requiere cambiar el producto (calificaciones sin queja, opiniones positivas, duplicados de algo ya resuelto, dudas de uso que se aclaran respondiendo).' },
+            motivo_cierre: { type: 'string' },
+            respuesta_sugerida: { type: 'string', description: 'Mensaje breve y amable para responderle a la persona si se le contacta.' }
           },
-          required: ['id', 'categoria', 'prioridad', 'resumen', 'solucion_sugerida']
+          required: ['id', 'categoria', 'prioridad', 'resumen', 'diagnostico', 'pasos', 'cerrar']
         }
       }
     },
     required: ['items']
   }
 };
-const SYS_TRIAGE = `Eres el agente analítico de Training Camp (Wexpand), una plataforma gratuita donde estudiantes arman su CV con un coach de IA (El Vestidor) y practican entrevistas por voz (La Cancha). Clasificas los comentarios que dejan en el chat de la prueba piloto para que el equipo los resuelva.
-Prioridad alta: impide usar una función o pierde datos. Media: molesta o confunde pero se puede seguir. Baja: idea, gusto u opinión.
-Usa la página y los errores técnicos registrados para inferir la causa. Responde ÚNICAMENTE llamando a la herramienta "triage".`;
+const SYS_TRIAGE = `Eres el agente de soporte de Training Camp (Wexpand), plataforma gratuita donde estudiantes arman su CV con un coach de IA (El Vestidor, /cv) y practican entrevistas por voz (La Cancha, /cancha). Resuelves los comentarios del chat de la prueba piloto.
+Para cada comentario: clasifica, diagnostica con la actividad registrada de la persona (eventos con hora, página, tamaño de pantalla, navegador, errores, si descargó CV o hizo entrevistas) y escribe el paso a paso para resolverlo en el producto.
+CONTEXTO DEL PRODUCTO: en celular, El Vestidor tiene dos pestañas (Platicar con el coach / Mi CV) y los botones de descarga están en Mi CV. El coach avanza por 7 etapas y marca el CV como completo en la etapa de revisión. La Cancha usa el reconocimiento de voz del navegador.
+Prioridad alta: impide usar una función o se pierden datos. Media: confunde o frena. Baja: idea, gusto u opinión.
+Las calificaciones sin mensaje se cierran (cerrar=true) con categoría "Calificación": solo se registran.
+Responde ÚNICAMENTE llamando a la herramienta "resolver".`;
+
+function hoyMx() { return new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/Mexico_City' }); }
+function textoResolucion(it) {
+  const L = [(it.cerrar ? 'Cerrado por el agente de soporte' : 'Plan del agente de soporte') + ' (' + hoyMx() + ').', 'Diagnóstico: ' + it.diagnostico];
+  if (it.cerrar) L.push('Motivo del cierre: ' + (it.motivo_cierre || 'no requiere cambios en el producto.'));
+  else { L.push('Paso a paso para resolverlo:'); (it.pasos || []).forEach((p, i) => L.push((i + 1) + '. ' + p)); }
+  if (it.como_verificar) L.push('Cómo verificarlo: ' + it.como_verificar);
+  if (it.respuesta_sugerida) L.push('Respuesta sugerida para la persona: ' + it.respuesta_sugerida);
+  return L.join('\n');
+}
 
 async function triage() {
-  const items = await db('feedback_sin_triage', { limite: 40 });
-  if (!items.length) return { clasificados: 0 };
-  const contenido = items.map(f => `- id ${f.id} | ${f.tipo} | página ${f.pagina || '?'} | ${f.created_at}\n  mensaje: ${recorta(f.mensaje || '', 1200)}\n  errores registrados: ${recorta(f.errores || [], 600)}\n  navegador: ${recorta(f.navegador || '', 160)}`).join('\n');
-  const out = await herramienta(SYS_TRIAGE, 'Comentarios por clasificar:\n' + contenido, TRIAGE, 4000);
-  let n = 0;
+  const items = await db('feedback_por_resolver', { limite: 30 });
+  if (!items.length) return { revisados: 0 };
+  const contenido = items.map(f => `- id ${f.id} | ${f.tipo}${f.calificacion ? ' ' + f.calificacion + '/5' : ''} | página ${f.pagina || '?'} | ${f.created_at} | pantalla ${f.pantalla || '?'}
+  mensaje: ${recorta(f.mensaje || '(sin mensaje)', 1200)}
+  errores registrados: ${recorta(f.errores || [], 500)}
+  navegador: ${recorta(f.navegador || '', 140)}
+  descargó CV: ${f.cvs_descargados} veces | entrevistas terminadas: ${f.entrevistas}
+  actividad: ${recorta((f.actividad || []).map(a => a.cuando.slice(5, 16) + ' ' + a.evento + (a.datos ? ' ' + JSON.stringify(a.datos) : '')).join(' · '), 1500)}`).join('\n');
+  const out = await herramienta(SYS_TRIAGE, 'Comentarios por resolver:\n' + contenido, TRIAGE, 6000);
+  let planes = 0, cerrados = 0;
   for (const it of out.items || []) {
     if (!items.some(f => f.id === it.id)) continue;
-    await db('guardar_triage', { id: it.id, categoria: it.categoria, prioridad: it.prioridad, triage: it });
-    n++;
+    const r = await db('guardar_resolucion', { id: it.id, categoria: it.categoria, prioridad: it.prioridad, triage: { resumen: it.resumen, causa_probable: it.diagnostico, solucion_sugerida: (it.pasos || []).join(' → '), respuesta_sugerida: it.respuesta_sugerida || null }, resolucion: textoResolucion(it), estado: it.cerrar ? 'resuelto' : 'en_proceso' });
+    if (r && r.ok) it.cerrar ? cerrados++ : planes++;
   }
-  return { clasificados: n };
+  return { revisados: items.length, con_plan: planes, cerrados };
 }
 
 /* ---------------- 2. Auditoría quincenal ---------------- */

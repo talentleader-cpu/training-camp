@@ -106,8 +106,22 @@
       if (S.fase === 'idioma') LANG_CHIPS.forEach(function (c) { chip(c.t, function () { pickLang(c.l, c.t); }); });
       else if (S.error) chip('Reintentar', retry);
       else arr(S.quick).forEach(function (c) { chip(c, c === SUBIR ? function () { $('cvFile').click(); } : function () { $('msg').value = c; submit(); }); });
+      if (!S.error && S.fase !== 'idioma' && puedeTerminar()) chip('Ya terminé, quiero descargar', terminar);
     }
     $('send').disabled = busy;
+  }
+  // la persona decide cuándo su CV está listo: con lo esencial completo puede cerrar y descargar
+  function puedeTerminar() { return !S.completo && S.cv && E.completa(S.cv, 'datos') && (E.completa(S.cv, 'experiencia') || E.completa(S.cv, 'educacion')); }
+  function terminar() {
+    if (busy) return;
+    S.completo = true; S.seccion = 'revision'; S.quick = [];
+    S.messages.push({ role: 'user', content: 'Ya terminé, quiero descargar mi CV.' });
+    S.messages.push({ role: 'assistant', content: '¡Listo! Tu CV quedó armado. Descárgalo en PDF o Word en «Mi CV» (en compu, a la derecha). Si después quieres seguir puliéndolo, aquí estaré.' });
+    if (!S._avisoCompleto) { S._avisoCompleto = true; TC.evento('cv_completo', { modo: S.modo || 'nuevo', idioma: S.lang, manual: true }); }
+    save(); renderAll(); pretranslate();
+    // en celular las descargas están en la pestaña «Mi CV»: la abrimos y llevamos a los botones
+    if ($('main').dataset.tab === 'chat' && getComputedStyle($('tabCv')).display !== 'none' && $('tabCv').offsetParent) $('tabCv').click();
+    setTimeout(function () { var d = $('descargas'); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 80);
   }
   function chip(t, fn) { var b = el('button', null, t); b.type = 'button'; b.onclick = fn; $('quick').appendChild(b); }
 
@@ -591,7 +605,8 @@
     $('vacante').value = ''; $('vacUrl').value = ''; $('vacSt').textContent = ''; prevBullets = new Set(); save(); $('reset').dataset.armed = ''; $('reset').textContent = 'Empezar un CV nuevo'; renderAll();
   };
 
-  function renderAll() { syncLang(); renderLog(); renderSteps(); renderVer(); renderCV(); renderAts(); syncLk(); renderUp(); }
+  $('terminar').onclick = terminar;
+  function renderAll() { syncLang(); renderLog(); renderSteps(); $('terminar').hidden = !puedeTerminar() || S.fase === 'idioma'; renderVer(); renderCV(); renderAts(); syncLk(); renderUp(); }
   renderAll();
   TC.evento('vestidor_abierto', { tiene_cv: !!(S && S.cv && allBullets(S.cv).length) });
 })();

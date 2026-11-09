@@ -20,7 +20,8 @@ LAS 7 ETAPAS (siempre en este orden)
 4. experiencia: empleos, prácticas, servicio social, voluntariado, negocio propio o familiar. UN PUESTO A LA VEZ: empresa → puesto → ciudad → fechas → y luego EXCAVA (ver abajo) hasta tener de 3 a 5 viñetas fuertes en el puesto más reciente o relevante (2 o 3 en los anteriores), con al menos un resultado medible. Cuando termines un puesto, pregunta si hay otro antes de cambiar de etapa.
 5. proyectos: proyectos escolares o personales, liderazgo, sociedades de alumnos, equipos deportivos, concursos, hackathons, voluntariado. Es opcional, pero a estudiantes y recién egresados insísteles con ejemplos porque aquí suele estar su mejor material.
 6. habilidades: herramientas y habilidades técnicas (mínimo 3), idiomas con nivel, certificaciones o cursos (opcional), intereses (opcional). Propón las herramientas que ya mencionó en la conversación y pregúntale si agrega otras; nunca agregues una que no haya dicho.
-7. revision: revisa el CV como experto (ver abajo). Señala como máximo 2 mejoras concretas a la vez y pregunta si las aplicas. Cuando la persona esté conforme, marca completo=true e invítala a descargar.
+7. revision: revisa el CV como experto (ver abajo) en UNA sola ronda: señala como máximo 2 mejoras concretas y pregunta si las aplicas. En cuanto la persona responda (las aplique o no), marca completo=true e invítala a descargar. No abras rondas nuevas de retoques por tu cuenta: si quiere seguir puliendo, ella te lo pedirá.
+CIERRE: si en cualquier momento la persona dice que ya terminó, que ya quiere descargar o que así está bien, respétalo: marca completo=true, resume en una frase lo que quedó y dile que ya puede descargar con los botones de abajo. Nunca la retengas con más preguntas.
 
 MÉTODO DE EXCAVACIÓN (lo más importante de tu trabajo)
 Nunca preguntes solo "¿qué hacías?". Usa UN ángulo por mensaje, el que más sirva para su área y la vacante, y da un ejemplo corto para detonar su memoria:
@@ -180,6 +181,10 @@ module.exports = async function handler(req, res) {
 - Si el CV subido está en un idioma distinto al idioma del CV, tradúcelo conforme lo mejoras.
 - Recorre las etapas saltando lo que ya esté completo y fuerte. Dedica la mayor parte del tiempo a excavar en experiencia y proyectos para convertir funciones ("encargado de…", "apoyo en…") en logros con alcance y resultados.` + (diagnostico ? `
 - ESTE ES TU PRIMER MENSAJE EN MODO MEJORA: empieza con un diagnóstico de experto en 2 o 3 frases (qué está bien y las 2 mejoras de mayor impacto que ves: viñetas sin resultados, verbos débiles, falta de palabras clave de la vacante, secciones vacías…). Ya puedes mejorar la redacción de lo existente en el CV. Luego haz la primera pregunta, empezando por la etapa que te indico como actual.` : '') : '';
+  const turnos = msgs.filter(m => m.role === 'user').length;
+  const quiereTerminar = ultimoUsuario && /(ya\s+termin|quiero\s+(terminar|descargar|acabar)|terminar\s+mi\s+cv|ya\s+(qued[oó]|est[aá])|as[ií]\s+est[aá]\s+bien|ya\s+no\s+quiero\s+(cambiar|agregar)|listo\s+para\s+descargar)/i.test(String(ultimoUsuario.content || ''));
+  const CIERRE = quiereTerminar ? 'LA PERSONA QUIERE TERMINAR AHORA: marca completo=true, seccion="revision", resume en una frase lo que quedó y dile que ya puede descargar. No hagas más preguntas.'
+    : turnos >= 35 && actual !== 'revision' ? `Llevan ${turnos} mensajes: prioriza cerrar. Termina la etapa actual con lo que ya tienes y avanza a revisión pronto.` : '';
   const contexto = [
     `Idioma del CV: ${idiomaTxt}.`,
     perfil.nombre ? `Nombre registrado: ${String(perfil.nombre).slice(0, 120)}.` : '',
@@ -189,6 +194,7 @@ module.exports = async function handler(req, res) {
     perfil.ingles ? `Inglés declarado: ${String(perfil.ingles).slice(0, 4)}.` : '',
     vacante ? `Vacante objetivo (úsala para priorizar palabras clave, sin inventar):\n<vacante>\n${vacante}\n</vacante>` : 'No hay vacante objetivo; arma un CV general para su área.',
     MODO_MEJORA,
+    CIERRE,
     estadoEtapas(cv, actual),
     `CV actual (JSON):\n${JSON.stringify(cv).slice(0, 30000)}`
   ].filter(Boolean).join('\n');
@@ -213,7 +219,7 @@ module.exports = async function handler(req, res) {
       cv: out.cv && typeof out.cv === 'object' ? out.cv : cv,
       seccion: E.ORDEN.includes(out.seccion) ? out.seccion : actual,
       respuestas_rapidas: Array.isArray(out.respuestas_rapidas) ? out.respuestas_rapidas.slice(0, 3).map(String) : [],
-      completo: !!out.completo
+      completo: !!out.completo || !!quiereTerminar
     });
   } catch (e) {
     if (e.code === 429) return bad(res, 429, 'El coach está muy ocupado. Intenta en un minuto.');

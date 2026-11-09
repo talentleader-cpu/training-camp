@@ -191,7 +191,8 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
 
     <section data-s="comentarios" hidden>
       <h2>Comentarios del chat</h2>
-      <p class="sub">Problemas, ideas y opiniones que dejan en el chat. El agente analítico los clasifica y sugiere una solución; tú marcas cómo va cada uno.</p>
+      <p class="sub">Problemas, ideas y opiniones que dejan en el chat. El agente de soporte revisa lo que hizo cada persona, escribe el diagnóstico y el paso a paso para resolverlo en «Estado y cómo se resolvió», y cierra lo que no necesita cambios. Corre todos los días; también puedes pedírselo ahora.</p>
+      <div class="acciones" style="margin:-6px 0 14px"><button class="btn" type="button" data-forzar="triage">Pedir al agente que los resuelva ahora</button><span class="estado" id="fbEstado"></span></div>
       <div class="grid g4" id="fbKpis" style="margin-bottom:16px"></div>
       <div class="filtros">
         <select id="fEstado"><option value="">Todos los estados</option><option value="abiertos">Abiertos</option><option value="nuevo">Nuevo</option><option value="en_revision">En revisión</option><option value="en_proceso">En proceso</option><option value="resuelto">Resuelto</option><option value="descartado">Descartado</option></select>
@@ -248,7 +249,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
 
     <section data-s="agentes" hidden>
       <h2>Agentes</h2>
-      <p class="sub">El orquestador corre todos los días a las 7:17 a.m. (hora de México): manda al agente de skills a analizar las entrevistas nuevas, al analítico a clasificar el chat, y cada 14 días la auditoría y cada mes el reporte.</p>
+      <p class="sub">El orquestador corre todos los días a las 7:17 a.m. (hora de México): manda al agente de skills y al auditor a revisar las entrevistas nuevas, al de soporte a resolver los comentarios del chat, y cada 14 días la auditoría y cada mes el reporte.</p>
       <div class="acciones" style="margin-bottom:14px"><button class="btn" type="button" data-forzar="">Correr agentes ahora</button><span class="estado" id="agEstado"></span></div>
       <div class="card" style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Agente</th><th>Tarea</th><th>Estado</th><th>Detalle</th><th>Tiempo</th></tr></thead><tbody id="runRows"></tbody></table></div>
     </section>
@@ -605,7 +606,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
   /* ---------- correr agentes ---------- */
   document.querySelectorAll('[data-forzar]').forEach(function (b) {
     b.onclick = function () {
-      var f = b.dataset.forzar, st = f ? $('infEstado') : $('agEstado');
+      var f = b.dataset.forzar, st = f === 'triage' ? $('fbEstado') : f ? $('infEstado') : $('agEstado');
       document.querySelectorAll('[data-forzar]').forEach(function (x) { x.disabled = true; });
       st.textContent = 'Trabajando… puede tardar hasta 3 minutos.';
       fetch('/api/orquestador', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigo: CODIGO, forzar: f }) })
