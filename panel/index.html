@@ -154,6 +154,8 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
     <select id="periodo" aria-label="Periodo">
       <option value="7">Últimos 7 días</option><option value="14">Últimos 14 días</option><option value="30" selected>Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="0">Todo</option>
     </select>
+    <button type="button" onclick="window.WXAgentes&&WXAgentes.open('cerebro')">Cerebro</button>
+    <button type="button" onclick="window.WXAgentes&&WXAgentes.open('rubricas')">Rúbricas de agentes</button>
     <button type="button" id="recargar">Actualizar</button>
     <button type="button" id="salir">Salir</button>
   </header>
@@ -260,6 +262,7 @@ details.vac div{white-space:pre-wrap;font-size:13px;color:var(--suave);margin-to
   <div class="cuerpo" id="cjCuerpo"></div>
 </aside>
 
+<script src="https://weai.wexpandmx.com/wx-agentes.js" data-plataforma="sim" data-boton="no" defer></script>
 <script src="/js/tc.js"></script>
 <script>
 (function () {
