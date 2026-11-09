@@ -6,6 +6,7 @@ const { readBody } = require('./_cv');
 const skills = require('./_agente-skills');
 const auditor = require('./_agente-auditor');
 const analitico = require('./_agente-analitico');
+const versiones = require('./_versiones');
 
 async function paso(log, agente, tarea, fn) {
   const t = Date.now();
@@ -35,6 +36,8 @@ module.exports = async function handler(req, res) {
   const log = [], origen = esCron ? 'cron' : esPanel ? 'panel' : 'prueba';
   const ahora = new Date();
 
+  // 0) versionado: registra la versión vigente de cada agente antes de que trabajen
+  if (!forzar) await paso(log, 'orquestador', 'versiones de prompts', () => versiones.registrar());
   // 1) agente de skills: entrevistas nuevas
   if (!forzar || forzar === 'skills') await paso(log, 'skills', 'perfiles de entrevistas', () => skills.correr({ limite: 9, hastaMs: limite - 150000 }));
   // 1b) agente auditor: califica al entrevistador y al evaluador de cada entrevista nueva
